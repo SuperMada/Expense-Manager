@@ -1,5 +1,23 @@
+# Python
 venv
+.venv
 __pycache__/
+.pytest_cache/
+
+# Database
 *.db
+
+# Java
+target/
+*.class
+
+# IDE
+.idea/
+.vscode/
+.settings/
+.classpath
+.project
+
+# Others
 logs
 temp reports
