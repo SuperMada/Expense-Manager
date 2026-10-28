@@ -1,5 +1,5 @@
 import sqlite3
-from employee_app.exceptions import AuthenticationError
+from employee_app.exceptions import AuthenticationError, AuthorizationError
 
 def authenticate_user(conn: sqlite3.Connection, username, password):
     row = conn.execute(
@@ -13,3 +13,7 @@ def authenticate_user(conn: sqlite3.Connection, username, password):
         raise AuthenticationError("Invalid username or password")
 
     return row
+
+def role_required(user, expected_role):
+    if user is None or user["role"] != expected_role:
+        raise AuthorizationError(f"This account does not have access to this app.")

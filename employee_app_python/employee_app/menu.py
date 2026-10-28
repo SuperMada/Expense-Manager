@@ -1,6 +1,6 @@
 import sqlite3
 from employee_app import services
-from employee_app.exceptions import AuthenticationError
+from employee_app.exceptions import AuthenticationError, AuthorizationError
 
 def _read_input(prompt: str):
     while True:
@@ -16,6 +16,12 @@ def login_menu(conn: sqlite3.Connection, expected_role: str):
             user = services.authenticate_user(conn, username, password)
         except AuthenticationError:
             print("Invalid username or password")
+            continue
+
+        try:
+            services.role_required(user, expected_role)
+        except AuthorizationError:
+            print("This account does not have access to this app.")
             continue
 
         print()
