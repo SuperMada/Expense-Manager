@@ -28,7 +28,7 @@ def login_menu(conn: sqlite3.Connection, expected_role: str):
             services.role_required(user, expected_role)
         except AuthorizationError:
             print("This account does not have access to this app.")
-            continue
+            sys.exit(1)
 
         print()
         print(f"Welcome, {user['full_name']}!")
