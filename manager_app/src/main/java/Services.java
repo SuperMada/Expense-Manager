@@ -1,9 +1,14 @@
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
+
+import exceptions.AuthenticationException;
+import exceptions.AuthorizationException;
 
 public class Services {
-    public static boolean login(Connection conn, String username, String password){
+    public static int login(Connection conn, String username, String password)
+        throws AuthenticationException, AuthorizationException, SQLException{
             /*String sql = "INSERT INTO expenses (description, amount, category_id) VALUES (?, ?, ?)";
             try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, "Coffee");
@@ -25,8 +30,8 @@ public class Services {
         try (PreparedStatement ps = conn.prepareStatement(sql)){
             ps.setString(1, username);
             ps.setString(2, password);
-            ResultSet rs = ps.executeQuery();
-            try{
+
+            try(ResultSet rs = ps.executeQuery()){
                 if(rs.next()){
                     user = rs.getInt("id");
                     role = rs.getString("role");
@@ -34,20 +39,29 @@ public class Services {
                     //For these checks these need to return an error code that is used in the front
                     //Because we want to return user id these should be negative codes that equate to different errors
                     //If the username or password does not exist/not a valid login
-                    System.out.println("This username + Password combo does not exist");
+                    throw new AuthenticationException("Invalid username or password.");
                 }
                 if(!role.equals("manager")){
                     //If the user is not a manager
-                    System.out.println("You are not a manager");
+                    throw new AuthorizationException("This account does not have access to this app.");
                 }
-
-            } catch (Exception e){
-                e.printStackTrace();
             }
-
-        } catch (Exception e){
-            e.printStackTrace();
         }
-        return false;
+        return user;
+    }
+
+    public static String getNameFromID(Connection conn, int id)
+        throws SQLException{
+        String sql = "SELECT full_name FROM users WHERE id = ?;";
+        String name = "";
+        try (PreparedStatement ps = conn.prepareStatement(sql)){
+            ps.setInt(1, id);
+            try(ResultSet rs = ps.executeQuery()){
+                if(rs.next()){
+                    name = rs.getString("full_name");
+                }
+            }
+        }
+        return name;
     }
 }

@@ -24,6 +24,8 @@ public class Database {
         return conn;
     }
 
+
+    //This creates the db if it does not already exist
     private static void runScript(Connection conn, String resource)
             throws SQLException, IOException {
         try (var in = Database.class.getClassLoader().getResourceAsStream(resource)) {
