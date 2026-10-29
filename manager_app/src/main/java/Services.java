@@ -39,7 +39,7 @@ public class Services {
                     //For these checks these need to return an error code that is used in the front
                     //Because we want to return user id these should be negative codes that equate to different errors
                     //If the username or password does not exist/not a valid login
-                    throw new AuthenticationException("Invalid username or password.");
+                    throw new AuthenticationException("Invalid username or password.\n");
                 }
                 if(!role.equals("manager")){
                     //If the user is not a manager
