@@ -1,4 +1,5 @@
 import java.sql.Connection;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Scanner;
 
@@ -92,6 +93,7 @@ public class Menu {
                 System.exit(0);
             } else if(option == 1){
                 //Call pending expenses
+                listExpenses(conn);
             } else if(option == 2){
                 //Call Rewview expenses
             } else if(option == 3){
@@ -101,5 +103,16 @@ public class Menu {
                 continue;
             }
         }
+    }
+
+    public static void listExpenses(Connection conn)
+        throws SQLException{
+        ResultSet data = Services.getExpensesFromID(conn);
+        if(!data.next()){
+            System.out.println("No pending expenses.\n");
+        } else{
+            System.out.printf("Expense ID: %d, Employee Name: %s, Date: %s, Category: %s, Amount: $%d, Description: %s", data.getInt("id"), data.getString("name"), data.getString("expense_date"), data.getString("category"), data.getInt("amount"), data.getString("description"));
+        }
+
     }
 }

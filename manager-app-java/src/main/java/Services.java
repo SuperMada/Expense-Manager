@@ -1,3 +1,5 @@
+import java.sql.Statement;
+import java.util.ArrayList;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -61,6 +63,29 @@ public class Services {
         }
         return name;
     }
+
+    public static List<Expense> getExpensesFromID(Connection conn)
+        throws SQLException{
+        //Don't use expense us list of list of objects
+        List<Expense> result = new ArrayList<>();
+        String sql = """
+                    SELECT ex.id, u.full_name, ex.expense_date, c.name, ex.amount, ex.description
+                    FROM expenses ex
+                    JOIN users u ON ex.user_id = u.id 
+                    JOIN categories c ON ex.category_id = c.id
+                    JOIN approvals a ON ex.id = a.expense_id
+                    WHERE a.status like 'pending'
+                    ORDER BY ex.expense_date;
+                    """;
+        try(Statement st = conn.createStatement();
+            ResultSet rs = st.executeQuery(sql)){
+            while(rs.next()){
+                result.add(new E)
+            }
+            return rs;
+        }
+    }
+
 
     public static void role_required(String role, String expected_role){
         if(!role.equals(expected_role)){
