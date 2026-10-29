@@ -58,13 +58,13 @@ pip install -r requirements.txt
 ### Employee App (Python)
 
 ```bash
-cd employee_app_python
+cd employee-app-python
 python -m employee_app.main
 ```
 
 ### Manager App (Java)
 
 ```bash
-cd manager_app
+cd manager-app-java
 mvn -q compile exec:java
 ```
