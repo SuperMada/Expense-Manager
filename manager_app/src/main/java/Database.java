@@ -6,16 +6,44 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.List;
 
 public class Database {
-    private static final String DB_FILE = "app.db";
-    private static final String URL = "jdbc:sqlite:" + DB_FILE;
+
+    private static final String ENV_VAR = "EM_DB_PATH";
+    private static final Path ENV_FILE = Path.of("..", ".env");
+
+    private static Path resolveDbPath() throws IOException {
+        String value = null;
+
+        if (Files.exists(ENV_FILE)) {
+            for (String line : Files.readAllLines(ENV_FILE)) {
+                line = line.strip();
+                if (line.startsWith(ENV_VAR + "=")) {
+                    value = line.substring(ENV_VAR.length() + 1).strip();
+                    break;
+                }
+            }
+        }
+
+        if (value == null || value.isBlank()) {
+            throw new IOException(ENV_VAR + " is not set in " + ENV_FILE.toAbsolutePath());
+        }
+
+        Path dbPath = Path.of(value);
+        Path parent = dbPath.toAbsolutePath().getParent();
+        if (parent != null) {
+            Files.createDirectories(parent);
+        }
+        return dbPath;
+    }
 
     public static Connection init() throws SQLException, IOException {
         // Check BEFORE connecting, because connecting creates the file
-        boolean isNew = Files.notExists(Path.of(DB_FILE));
+        Path url = resolveDbPath();
+        boolean isNew = Files.notExists(url);
 
-        Connection conn = DriverManager.getConnection(URL);
+        Connection conn = DriverManager.getConnection("jdbc:sqlite:" + url.toString());
 
         if (isNew) {
             runScript(conn, "schema.sql");
