@@ -61,3 +61,10 @@ pip install -r requirements.txt
 cd employee_app_python
 python -m employee_app.main
 ```
+
+### Manager App (Java)
+
+```bash
+cd manager_app
+mvn -q compile exec:java
+```
