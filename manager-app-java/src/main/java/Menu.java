@@ -69,7 +69,37 @@ public class Menu {
     public static void managerMenu(Connection conn, Scanner in, int user)
         throws SQLException{
         String name = Services.getNameFromID(conn, user);
-        System.out.printf("Welcome, %s\n", name);
-
+        int option = -1;
+        String input;
+        while(true){
+            option = -1;
+            System.out.printf("Welcome, %s\n", name);
+            System.out.println("Please Kindly Select an Option...\n");
+            System.out.println("1: List Pending Expenses");
+            System.out.println("2: Review An Expense");
+            System.out.println("3: Reports");
+            System.out.println("0: Exit");
+            input = in.nextLine();
+            System.out.println();
+            try{
+                option = Integer.parseInt(input);
+            } catch(NumberFormatException e){
+                System.out.println("Please enter a valid option.\n");
+                continue;
+            }
+            if(option == 0){
+                System.out.println("Shutting Down...");
+                System.exit(0);
+            } else if(option == 1){
+                //Call pending expenses
+            } else if(option == 2){
+                //Call Rewview expenses
+            } else if(option == 3){
+                //Call reports
+            } else{
+                System.out.println("Please enter a valid option.\n");
+                continue;
+            }
+        }
     }
 }
