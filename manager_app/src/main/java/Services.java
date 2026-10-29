@@ -41,10 +41,7 @@ public class Services {
                     //If the username or password does not exist/not a valid login
                     throw new AuthenticationException("Invalid username or password.\n");
                 }
-                if(!role.equals("manager")){
-                    //If the user is not a manager
-                    throw new AuthorizationException("This account does not have access to this app.");
-                }
+                role_required(role, "manager");
             }
         }
         return user;
@@ -63,5 +60,12 @@ public class Services {
             }
         }
         return name;
+    }
+
+    public static void role_required(String role, String expected_role){
+        if(!role.equals(expected_role)){
+            //If the user is not a manager
+            throw new AuthorizationException("This account does not have access to this app.");
+        }
     }
 }
