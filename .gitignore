@@ -21,3 +21,4 @@ target/
 # Others
 logs
 temp reports
+.env
