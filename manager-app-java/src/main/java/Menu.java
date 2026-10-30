@@ -74,7 +74,7 @@ public class Menu {
         String input;
         while(true){
             option = -1;
-            System.out.printf("Welcome, %s\n", name);
+            System.out.printf("Welcome, %s,\n", name);
             System.out.println("Please Kindly Select an Option...\n");
             System.out.println("1: List Pending Expenses");
             System.out.println("2: Review An Expense");
