@@ -1,6 +1,6 @@
 import java.sql.Connection;
-import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.List;
 import java.util.Scanner;
 
 import exceptions.AuthenticationException;
@@ -93,7 +93,7 @@ public class Menu {
                 System.exit(0);
             } else if(option == 1){
                 //Call pending expenses
-                listExpenses(conn);
+                listExpenses(conn, in);
             } else if(option == 2){
                 //Call Rewview expenses
             } else if(option == 3){
@@ -105,14 +105,17 @@ public class Menu {
         }
     }
 
-    public static void listExpenses(Connection conn)
+    public static void listExpenses(Connection conn, Scanner in)
         throws SQLException{
-        ResultSet data = Services.getExpensesFromID(conn);
-        if(!data.next()){
+        List<List<Object>> data = Services.getExpensesFromID(conn);
+        if(data.isEmpty()){
             System.out.println("No pending expenses.\n");
         } else{
-            System.out.printf("Expense ID: %d, Employee Name: %s, Date: %s, Category: %s, Amount: $%d, Description: %s", data.getInt("id"), data.getString("name"), data.getString("expense_date"), data.getString("category"), data.getInt("amount"), data.getString("description"));
+            for(List<Object> row : data){
+            System.out.printf("Expense ID: %d, Employee Name: %s, Date: %s, Category: %s, Amount: $%.2f, Description: %s\n", row.get(0), row.get(1), row.get(2), row.get(3), row.get(4), row.get(5));
+            }
+            System.out.println("\n\nPress ENTER to return to main menu");
+            in.nextLine();
         }
-
     }
 }

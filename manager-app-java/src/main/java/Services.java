@@ -1,5 +1,6 @@
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.List;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -64,10 +65,10 @@ public class Services {
         return name;
     }
 
-    public static List<Expense> getExpensesFromID(Connection conn)
+    public static List<List<Object>> getExpensesFromID(Connection conn)
         throws SQLException{
         //Don't use expense us list of list of objects
-        List<Expense> result = new ArrayList<>();
+        List<List<Object>> results = new ArrayList<>();
         String sql = """
                     SELECT ex.id, u.full_name, ex.expense_date, c.name, ex.amount, ex.description
                     FROM expenses ex
@@ -79,10 +80,15 @@ public class Services {
                     """;
         try(Statement st = conn.createStatement();
             ResultSet rs = st.executeQuery(sql)){
+            
             while(rs.next()){
-                result.add(new E)
+                List<Object> result = new ArrayList<>();
+                for(int i = 1; i<=6; i++){
+                    result.add(rs.getObject(i));
+                }
+                results.add(result);
             }
-            return rs;
+            return results;
         }
     }
 
