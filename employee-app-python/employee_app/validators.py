@@ -89,7 +89,7 @@ def validate_expense_date(raw:str):
         raw (str): The raw input string representing the expense date.
 
     Returns:
-        date: The validated expense date in ISO format (a string like 'YYYY-MM-DD').
+        str: The validated expense date in ISO format (a string like 'YYYY-MM-DD').
 
     Raises:
         ValidationError: If the expense date is invalid.
