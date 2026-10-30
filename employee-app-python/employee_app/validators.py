@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import date, timedelta
 from employee_app.exceptions import ValidationError
 
 AMOUNT_MSG = "Amount must be greater than 0, at most 10000.00, with at most 2 decimals."
@@ -89,7 +89,7 @@ def validate_expense_date(raw:str):
         raw (str): The raw input string representing the expense date.
 
     Returns:
-        datetime: The validated expense date.
+        date: The validated expense date in ISO format (a string like 'YYYY-MM-DD').
 
     Raises:
         ValidationError: If the expense date is invalid.
@@ -98,15 +98,15 @@ def validate_expense_date(raw:str):
 
     # ISO format check
     try:
-        expense_date = datetime.fromisoformat(raw)
+        expense_date = date.fromisoformat(raw)
     except ValueError:
         raise ValidationError(DATE_MSG)
     if expense_date.isoformat() != raw:
         raise ValidationError(DATE_MSG)
 
     # Future date and 90-day range check
-    today = datetime.now()
+    today = date.today()
     if expense_date > today or expense_date < today - timedelta(days=90):
         raise ValidationError(DATE_MSG)
 
-    return expense_date
+    return expense_date.isoformat()
