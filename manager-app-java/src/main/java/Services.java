@@ -1,3 +1,6 @@
+import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.List;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -61,6 +64,47 @@ public class Services {
         }
         return name;
     }
+
+    public static List<List<Object>> getExpensesFromID(Connection conn, int option)
+        throws SQLException{
+        //Don't use expense us list of list of objects
+        List<List<Object>> results = new ArrayList<>();
+        String sql = "";
+        if(option == 1){
+            sql = """
+                    SELECT ex.id, u.full_name, ex.expense_date, c.name, ex.amount, ex.description
+                    FROM expenses ex
+                    JOIN users u ON ex.user_id = u.id 
+                    JOIN categories c ON ex.category_id = c.id
+                    JOIN approvals a ON ex.id = a.expense_id
+                    WHERE a.status like 'pending'
+                    ORDER BY ex.expense_date;
+                    """;
+        } else{
+            sql = """
+                    SELECT ex.id, u.full_name, ex.expense_date, c.name, ex.amount, ex.description
+                    FROM expenses ex
+                    JOIN users u ON ex.user_id = u.id 
+                    JOIN categories c ON ex.category_id = c.id
+                    JOIN approvals a ON ex.id = a.expense_id
+                    WHERE a.status like 'pending'
+                    ORDER BY ex.amount;
+                    """;
+        }
+        try(Statement st = conn.createStatement();
+            ResultSet rs = st.executeQuery(sql)){
+            
+            while(rs.next()){
+                List<Object> result = new ArrayList<>();
+                for(int i = 1; i<=6; i++){
+                    result.add(rs.getObject(i));
+                }
+                results.add(result);
+            }
+            return results;
+        }
+    }
+
 
     public static void role_required(String role, String expected_role){
         if(!role.equals(expected_role)){
