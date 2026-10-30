@@ -107,7 +107,23 @@ public class Menu {
 
     public static void listExpenses(Connection conn, Scanner in)
         throws SQLException{
-        List<List<Object>> data = Services.getExpensesFromID(conn);
+        int option = 0;
+        while(true){
+            System.out.println("1: Sort by Date\n2: Sort by Amount");
+            String input = in.nextLine();
+            try{
+                option = Integer.parseInt(input);
+            } catch(NumberFormatException e){
+                System.out.println("Please enter a valid option.\n");
+                continue;
+            }
+            if(option != 1 && option != 2){
+                System.out.println("Please enter a valid option.\n");
+                continue;
+            }
+            break;
+        }
+        List<List<Object>> data = Services.getExpensesFromID(conn, option);
         if(data.isEmpty()){
             System.out.println("No pending expenses.\n");
         } else{

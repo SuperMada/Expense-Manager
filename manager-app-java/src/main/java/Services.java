@@ -65,11 +65,13 @@ public class Services {
         return name;
     }
 
-    public static List<List<Object>> getExpensesFromID(Connection conn)
+    public static List<List<Object>> getExpensesFromID(Connection conn, int option)
         throws SQLException{
         //Don't use expense us list of list of objects
         List<List<Object>> results = new ArrayList<>();
-        String sql = """
+        String sql = "";
+        if(option == 1){
+            sql = """
                     SELECT ex.id, u.full_name, ex.expense_date, c.name, ex.amount, ex.description
                     FROM expenses ex
                     JOIN users u ON ex.user_id = u.id 
@@ -78,6 +80,17 @@ public class Services {
                     WHERE a.status like 'pending'
                     ORDER BY ex.expense_date;
                     """;
+        } else{
+            sql = """
+                    SELECT ex.id, u.full_name, ex.expense_date, c.name, ex.amount, ex.description
+                    FROM expenses ex
+                    JOIN users u ON ex.user_id = u.id 
+                    JOIN categories c ON ex.category_id = c.id
+                    JOIN approvals a ON ex.id = a.expense_id
+                    WHERE a.status like 'pending'
+                    ORDER BY ex.amount;
+                    """;
+        }
         try(Statement st = conn.createStatement();
             ResultSet rs = st.executeQuery(sql)){
             
