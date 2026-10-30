@@ -1,7 +1,10 @@
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Scanner;
+
+import javax.xml.validation.Validator;
 
 import exceptions.AuthenticationException;
 import exceptions.AuthorizationException;
@@ -96,10 +99,100 @@ public class Menu {
                 listExpenses(conn, in);
             } else if(option == 2){
                 //Call Rewview expenses
+                reviewExpenses(conn, in, user);
             } else if(option == 3){
                 //Call reports
             } else{
                 System.out.println("Please enter a valid option.\n");
+                continue;
+            }
+        }
+    }
+
+    public static void reviewExpenses(Connection conn, Scanner in, int user)
+        throws SQLException{
+        int expense_id = -1;
+        String status = "";
+        int reviewer_id = user;
+        String comment = "";
+        String date = LocalDate.now().toString();
+
+        //Need to take an expense id input first and check that it exists and is still pending before moving forward
+        while(expense_id < 0){
+            int option = -1;
+            System.out.println("Please enter the ID of the expense you wish to review: ");
+            String input = in.nextLine();
+            System.out.println();
+            try{
+                option = Integer.parseInt(input);
+            } catch(NumberFormatException e){
+                System.out.println("Please enter an integer ID.\n");
+                continue;
+            }
+            if(option>=0){
+                //See if the id exists and is pending
+                String report = Services.isPendingReport(conn, option);
+                System.out.println(report);
+                if(report.equals("Report Pending Approval Found\n")){
+                    //Ask inputs
+                    //Add to db
+                    expense_id = option;
+                    //Update status on a or d
+                    while(true){
+                        System.out.println("Please Select Approve('a') or Deny('d')");
+                        String status_input = in.nextLine();
+                        System.out.println();
+                        if(status_input.equals("a")){
+                            status = "approved";
+                            break;
+                        } else if(status_input.equals("d")){
+                            status = "denied";
+                            break;
+                        }
+                        System.out.println("Please enter a valid option (a/d)\n");
+                    }
+                    if(status.equals("approved")){
+                        String comment_status = "";
+                        while(true){
+                            System.out.println("Would you like to add a comment? (y/n)");
+                            comment_status = in.nextLine();
+                            System.out.println();
+                            if(comment_status.equals("y")){
+                                boolean comment_valid = false;
+                                while(!comment_valid){
+                                    System.out.println("Please enter your comment: ");
+                                    String comment_input = in.nextLine();
+                                    System.out.println();
+
+                                    comment_valid = Validators.approvalComment(comment_input);
+                                    //If the approval comment is empty should we place the empty string in the db of should be keep it null
+                                    if(comment_valid){
+                                        comment = comment_input;
+                                    }
+                                }   
+                                int success = Services.updateApproval(conn, status, reviewer_id, comment, date, expense_id);
+                                if(success == 1){
+                                    System.out.println("Successfully updated the expense report");
+                                } else{
+                                    System.out.println("Unexpected error, please try again");
+                                }
+                                break;
+                            } else if(comment_status.equals("n")){
+                                int success = Services.updateApproval(conn, status, reviewer_id, date, expense_id);
+                                if(success == 1){
+                                    System.out.println("Successfully updated the expense report");
+                                } else{
+                                    System.out.println("Unexpected error, please try again");
+                                }
+                                break;
+                            } else{
+                                System.out.println("Please enter either y or n\n");
+                            }
+                        }
+                    }
+                }
+            } else{
+                System.out.println("Please enter a valid pending expense ID\n");
                 continue;
             }
         }

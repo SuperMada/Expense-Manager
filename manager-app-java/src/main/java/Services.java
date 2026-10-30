@@ -112,4 +112,62 @@ public class Services {
             throw new AuthorizationException("This account does not have access to this app.");
         }
     }
+
+    public static String isPendingReport(Connection conn, int id)
+        throws SQLException{
+        String sql = """
+                    SELECT status
+                    FROM approvals
+                    WHERE expense_id = ?;    
+                    """;
+        try (PreparedStatement ps = conn.prepareStatement(sql)){
+            ps.setInt(1, id);
+            try(ResultSet rs = ps.executeQuery()){
+                if(rs.next()){
+                    String status = rs.getString("status");
+                    if(status.equals("pending")){
+                        return "Report Pending Approval Found\n";
+                    } else{
+                        return String.format("Given Report ID has already been %s\n", status);
+                    }
+                } else{
+                    return "No report found under given ID\n";
+                }
+            }
+        }
+    }
+
+    //Adding approval with comment
+    public static int updateApproval(Connection conn, String status, int reviewer_id, String comment, String review_date, int expense_id)
+        throws SQLException{
+        String sql = """
+                    UPDATE approvals
+                    SET status = ?, reviewer_id = ?, comment = ?, review_date = ?
+                    WHERE expense_id = ?;
+                    """;
+        try (PreparedStatement ps = conn.prepareStatement(sql)){
+            ps.setString(1, status);
+            ps.setInt(2, reviewer_id);
+            ps.setString(3, comment);
+            ps.setString(4, review_date);
+            ps.setInt(5, expense_id);
+            return ps.executeUpdate();
+        }
+    }
+    //Adding approval without comment
+    public static int updateApproval(Connection conn, String status, int reviewer_id, String review_date, int expense_id)
+        throws SQLException{
+        String sql = """
+                    UPDATE approvals
+                    SET status = ?, reviewer_id = ?, review_date = ?
+                    WHERE expense_id = ?;
+                    """;
+        try (PreparedStatement ps = conn.prepareStatement(sql)){
+            ps.setString(1, status);
+            ps.setInt(2, reviewer_id);
+            ps.setString(3, review_date);
+            ps.setInt(4, expense_id);
+            return ps.executeUpdate();
+        }
+    }
 }
