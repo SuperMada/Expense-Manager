@@ -168,6 +168,8 @@ public class Menu {
                                     //If the approval comment is empty should we place the empty string in the db of should be keep it null
                                     if(comment_valid){
                                         comment = comment_input;
+                                    } else{
+                                        System.out.println("That is not a valid comment, please input a valid approved comment");
                                     }
                                 }   
                                 int success = Services.updateApproval(conn, status, reviewer_id, comment, date, expense_id);
@@ -189,6 +191,28 @@ public class Menu {
                                 System.out.println("Please enter either y or n\n");
                             }
                         }
+                    } else if(status.equals("denied")){
+                        boolean comment_valid = false;
+                        while(!comment_valid){
+                            System.out.println("Please enter your comment: ");
+                            String comment_input = in.nextLine();
+                            System.out.println();
+
+                            comment_valid = Validators.denialComment(comment_input);
+                            //If the approval comment is empty should we place the empty string in the db of should be keep it null
+                            if(comment_valid){
+                                comment = comment_input;
+                            } else{
+                                System.out.println("That is not a valid comment, please input a valid approved comment");
+                            }
+                        }  
+                        int success = Services.updateApproval(conn, status, reviewer_id, comment, date, expense_id);
+                        if(success == 1){
+                            System.out.println("Successfully updated the expense report");
+                        } else{
+                            System.out.println("Unexpected error, please try again");
+                        }
+
                     }
                 }
             } else{
