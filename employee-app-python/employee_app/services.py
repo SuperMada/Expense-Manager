@@ -49,3 +49,22 @@ def submit_expense(conn: sql.Connection,
         raise DatabaseError(f"Database error: {e}")
 
     return expense_id
+
+def get_own_expenses(conn: sql.Connection, user: sql.Row, status=None):
+    role_required(user, "employee")
+
+    try:
+        rows = conn.execute(
+            "SELECT e.id, e.expense_date, c.name as category, e.amount, a.status "
+            "FROM expenses e "
+            "INNER JOIN categories c ON e.category_id = c.id "
+            "INNER JOIN approvals a ON e.id = a.expense_id "
+            "WHERE e.user_id = ? "
+            "AND (? is NULL OR a.status = ?)" # Filter by status if provided
+            "ORDER BY e.expense_date DESC, e.id DESC",
+            (user["id"], status, status)
+        ).fetchall()
+    except sql.Error as e:
+        raise DatabaseError(f"Database error: {e}")
+
+    return rows
