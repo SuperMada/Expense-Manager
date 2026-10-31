@@ -61,7 +61,7 @@ def get_own_expenses(conn: sql.Connection, user: sql.Row, status=None):
             "INNER JOIN approvals a ON e.id = a.expense_id "
             "WHERE e.user_id = ? "
             "AND (? is NULL OR a.status = ?)" # Filter by status if provided
-            "ORDER BY e.expense_date DESC",
+            "ORDER BY e.expense_date DESC, e.id DESC",
             (user["id"], status, status)
         ).fetchall()
     except sql.Error as e:
