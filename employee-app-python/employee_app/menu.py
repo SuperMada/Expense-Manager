@@ -21,8 +21,6 @@ MENU_VIEW_EXPENSES = """
 4. Denied
 """
 
-VALID_STATUSES = ["pending", "approved", "rejected"]
-
 def _read_input(prompt: str):
     while True:
         value = input(prompt).strip()
@@ -95,11 +93,11 @@ def view_expenses_menu(conn: sql.Connection, user: sql.Row):
         if choice == "1":
             status = None
         elif choice == "2":
-            status = "Pending"
+            status = "pending"
         elif choice == "3":
-            status = "Approved"
+            status = "approved"
         elif choice == "4":
-            status = "Denied"
+            status = "denied"
         else:
             print("Invalid option.")
             continue
