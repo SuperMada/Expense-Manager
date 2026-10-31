@@ -115,4 +115,21 @@ def update_expense(
         )
     except sql.Error as e:
         raise DatabaseError(f"Database error: {e}")
-    
+
+def delete_expense(conn: sql.Connection, user: sql.Row, expense_id: int):
+    role_required(user, "employee")
+
+    # Verify that the expense exists and belongs to the user, and is pending
+    get_own_pending_expense(conn, user, expense_id)
+
+    try:
+        conn.execute(
+            "DELETE FROM approvals WHERE expense_id = ?",
+            (expense_id,)
+        )
+        conn.execute(
+            "DELETE FROM expenses WHERE id = ?",
+            (expense_id,)
+        )
+    except sql.Error as e:
+        raise DatabaseError(f"Database error: {e}")

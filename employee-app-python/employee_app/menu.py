@@ -155,7 +155,35 @@ def edit_expense_menu(conn: sql.Connection, user: sql.Row):
         print(f"Expense {expense_id} updated")
     except ExpenseManagerError as e:
         print(f"Failed to update expense: {e}")
-    
+
+def delete_expense_menu(conn: sql.Connection, user: sql.Row):
+    print("Delete Pending Expense")
+    expense_id = _prompt_until_valid("Expense ID: ", validators.validate_expense_id)
+
+    try:
+        expense = services.get_own_pending_expense(conn, user, expense_id)
+    except ExpenseManagerError as e:
+        print(f"Failed to retrieve expense: {e}")
+        return
+
+    print(
+        f"About to delete expense: ID={expense_id}, "
+        f"amount={expense['amount']}, "
+        f"category_id={expense['category_id']}, "
+        f"description={expense['description']!r}, "
+        f"date={expense['expense_date']}"
+    )
+    confirm = input("Confirm delete? (y/Y to confirm, any other key to cancel): ")
+    if confirm.lower() != 'y':
+        print("Delete cancelled.")
+        return
+
+    try:
+        services.delete_expense(conn, user, expense_id)
+        print(f"Expense {expense_id} deleted")
+    except ExpenseManagerError as e:
+        print(f"Failed to delete expense: {e}")
+
 
 def employee_menu(conn: sql.Connection, user):
     while True:
@@ -171,7 +199,7 @@ def employee_menu(conn: sql.Connection, user):
         elif choice == "3":
             edit_expense_menu(conn, user)
         elif choice == "4":
-            print("Delete pending expense is not implemented.")
+            delete_expense_menu(conn, user)
         elif choice == "5":
             print("Review history is not implemented.")
         else:
