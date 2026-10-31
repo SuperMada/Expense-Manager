@@ -1,7 +1,17 @@
-import sqlite3
+import sqlite3 as sql
 import sys
-from employee_app import services
-from employee_app.exceptions import AuthenticationError, AuthorizationError
+from datetime import date
+from employee_app import services, validators
+from employee_app.exceptions import AuthenticationError, AuthorizationError, ValidationError, ExpenseManagerError
+
+MENU = """
+----- Employee Expense Manager -----
+1. Submit expense
+2. View my expenses (Not implemented)
+3. Edit pending expense (Not implemented)
+4. Delete pending expense (Not implemented)
+5. Review history (Not implemented)
+0. Exit"""
 
 def _read_input(prompt: str):
     while True:
@@ -9,7 +19,14 @@ def _read_input(prompt: str):
         if value:
             return value
 
-def login_menu(conn: sqlite3.Connection, expected_role: str):
+def _prompt_until_valid(prompt: str, validate: callable):
+    while True:
+        try:
+            return validate(input(prompt))
+        except ValidationError as e:
+            print(e)
+
+def login_menu(conn: sql.Connection, expected_role: str):
     attempts = 0
     while True:
         username = _read_input("Username: ")
@@ -34,10 +51,49 @@ def login_menu(conn: sqlite3.Connection, expected_role: str):
         print(f"Welcome, {user['full_name']}!")
         return user
 
-def employee_menu(conn: sqlite3.Connection, user):
+def submit_expense_menu(conn: sql.Connection, user: sql.Row):
+    print("Submit Expense")
+
+    amount = _prompt_until_valid("Amount: ", validators.validate_amount)
+    description = _prompt_until_valid("Description: ", validators.validate_description)
+    category = _prompt_until_valid("Category: ", validators.validate_category)
+
+    # Date of the expense, defaults to today if not provided
     while True:
-        print("Employee Menu")
-        print("0. Exit")
+        raw = input("Date (YYYY-MM-DD) (Enter for today): ")
+        try:
+            # if input is empty, default to today
+            if not raw:
+                expense_date = date.today().isoformat()
+            else:
+                expense_date = validators.validate_expense_date(raw)
+            break
+        except ValidationError as e:
+            print(e)
+
+    try:
+        expense_id = services.submit_expense(conn, user, amount, category, description, expense_date)
+        print(f"Expense submitted. ID: {expense_id}")
+    except ExpenseManagerError as e:
+        print(f"Failed to submit expense: {e}")
+
+
+def employee_menu(conn: sql.Connection, user):
+    while True:
+        print(MENU)
+
         choice = input("Select an option: ")
         if choice == "0":
             return
+        elif choice == "1":
+            submit_expense_menu(conn, user)
+        elif choice == "2":
+            print("View my expenses is not implemented.")
+        elif choice == "3":
+            print("Edit pending expense is not implemented.")
+        elif choice == "4":
+            print("Delete pending expense is not implemented.")
+        elif choice == "5":
+            print("Review history is not implemented.")
+        else:
+            print("Invalid option.")
