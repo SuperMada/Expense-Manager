@@ -1,5 +1,5 @@
 import sqlite3 as sql
-from employee_app.exceptions import AuthenticationError, AuthorizationError, DatabaseError
+from employee_app.exceptions import AuthenticationError, AuthorizationError, DatabaseError, InvalidStateError, NotFoundError
 
 def authenticate_user(conn: sql.Connection, username, password):
     row = conn.execute(
@@ -68,3 +68,51 @@ def get_own_expenses(conn: sql.Connection, user: sql.Row, status=None):
         raise DatabaseError(f"Database error: {e}")
 
     return rows
+
+def get_own_pending_expense(conn: sql.Connection, user: sql.Row, expense_id: int):
+    role_required(user, "employee")
+
+    try:
+        row = conn.execute(
+            "SELECT e.user_id, e.amount, e.category_id, e.description, e.expense_date, a.status "
+            "FROM expenses e "
+            "INNER JOIN approvals a ON e.id = a.expense_id "
+            "WHERE e.id = ?",
+            (expense_id,),
+        ).fetchone()
+    except sql.Error as e:
+        raise DatabaseError(f"Database error: {e}")
+
+    if row is None:
+        raise NotFoundError(f"Expense with ID {expense_id!r} not found")
+    if row["user_id"] != user["id"]:
+        raise AuthorizationError(f"This expense does not belong to you.")
+    if row["status"] != "pending":
+        raise InvalidStateError(f"Expense is no longer pending") 
+    
+    return row
+
+def update_expense(
+        conn: sql.Connection,
+        user: sql.Row,
+        expense_id: int,
+        amount: float,
+        category: int,
+        description: str,
+        expense_date: str):
+
+    role_required(user, "employee")
+
+    # Verify that the expense exists and belongs to the user, and is pending
+    get_own_pending_expense(conn, user, expense_id)
+
+    try:
+        conn.execute(
+            "UPDATE expenses "
+            "SET amount = ?, category_id = ?, description = ?, expense_date = ? "
+            "WHERE id = ?",
+            (amount, category, description, expense_date, expense_id)
+        )
+    except sql.Error as e:
+        raise DatabaseError(f"Database error: {e}")
+    
