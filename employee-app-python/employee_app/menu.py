@@ -7,11 +7,19 @@ from employee_app.exceptions import AuthenticationError, AuthorizationError, Val
 MENU = """
 ----- Employee Expense Manager -----
 1. Submit expense
-2. View my expenses (Not implemented)
+2. View my expenses
 3. Edit pending expense (Not implemented)
 4. Delete pending expense (Not implemented)
 5. Review history (Not implemented)
 0. Exit"""
+
+MENU_VIEW_EXPENSES = """
+----- Filter Expenses by Status -----
+1. All
+2. Pending
+3. Approved
+4. Denied
+"""
 
 def _read_input(prompt: str):
     while True:
@@ -78,6 +86,41 @@ def submit_expense_menu(conn: sql.Connection, user: sql.Row):
         print(f"Failed to submit expense: {e}")
 
 
+def view_expenses_menu(conn: sql.Connection, user: sql.Row):
+    print(MENU_VIEW_EXPENSES)
+    while True:
+        choice = input("Select a status: ").strip()
+        if choice == "1":
+            status = None
+        elif choice == "2":
+            status = "pending"
+        elif choice == "3":
+            status = "approved"
+        elif choice == "4":
+            status = "denied"
+        else:
+            print("Invalid option.")
+            continue
+        break
+
+    try:
+        rows = services.get_own_expenses(conn, user, status)
+    except ExpenseManagerError as e:
+        print(f"Failed to view expenses: {e}")
+        return
+    
+    if not rows:
+        print("No expenses found.")
+        return
+
+    header = f"{'ID':<5} | {'Date':<12} | {'Category':<16} | {'Amount':<11} | {'Status':<10}"
+    print(header)
+    print("-" * len(header))
+    for row in rows:
+        print(f"{row['id']:<5} | {row['expense_date']:<12} | {row['category']:<16} | ${row['amount']:<10.2f} | {row['status']:<10}")
+
+
+
 def employee_menu(conn: sql.Connection, user):
     while True:
         print(MENU)
@@ -88,7 +131,7 @@ def employee_menu(conn: sql.Connection, user):
         elif choice == "1":
             submit_expense_menu(conn, user)
         elif choice == "2":
-            print("View my expenses is not implemented.")
+            view_expenses_menu(conn, user)
         elif choice == "3":
             print("Edit pending expense is not implemented.")
         elif choice == "4":
