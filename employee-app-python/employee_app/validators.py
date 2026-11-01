@@ -5,6 +5,7 @@ AMOUNT_MSG = "Amount must be greater than 0, at most 10000.00, with at most 2 de
 DESC_MSG = "Description must be 1-200 characters (including spaces)."
 CATEGORY_MSG = "Category must be 1-6."
 DATE_MSG = "Date must be YYYY-MM-DD, not in the future, and within the last 90 days."
+EXPENSE_ID_MSG = "Expense ID must be a positive whole number."
 
 
 def validate_amount(raw:str):
@@ -110,3 +111,25 @@ def validate_expense_date(raw:str):
         raise ValidationError(DATE_MSG)
 
     return expense_date.isoformat()
+
+def validate_expense_id(raw:str):
+    """VR-08: Validate expense ID format and range.
+
+    Args:
+        raw (str): The raw input string representing the expense ID.
+
+    Returns:
+        int: The validated expense ID.
+
+    Raises:
+        ValidationError: If the expense ID is invalid.
+    """
+    raw = raw.strip()
+    if not raw.isdigit():
+        raise ValidationError(EXPENSE_ID_MSG)
+
+    expense_id = int(raw)
+    if expense_id <= 0:
+        raise ValidationError(EXPENSE_ID_MSG)
+
+    return expense_id

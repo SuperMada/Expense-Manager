@@ -27,10 +27,14 @@ def _read_input(prompt: str):
         if value:
             return value
 
-def _prompt_until_valid(prompt: str, validate: callable):
+def _prompt_until_valid(prompt: str, validate: callable, default=None):
     while True:
         try:
-            return validate(input(prompt))
+            value = input(prompt)
+            # If a default value is provided and the user enters nothing, use the default
+            if default is not None and not value:
+                value = default
+            return validate(value)
         except ValidationError as e:
             print(e)
 
@@ -120,6 +124,66 @@ def view_expenses_menu(conn: sql.Connection, user: sql.Row):
         print(f"{row['id']:<5} | {row['expense_date']:<12} | {row['category']:<16} | ${row['amount']:<10.2f} | {row['status']:<10}")
 
 
+def edit_expense_menu(conn: sql.Connection, user: sql.Row):
+    print("Edit Expense")
+    expense_id = _prompt_until_valid("Expense ID: ", validators.validate_expense_id)
+
+    try:
+        expense = services.get_own_pending_expense(conn, user, expense_id)
+    except ExpenseManagerError as e:
+        print(f"Failed to retrieve expense: {e}")
+        return
+
+    # Print which expense is being edited
+    print(f"Current: amount= {expense['amount']}, category_id= {expense['category_id']}, description= {expense['description']!r}, date= {expense['expense_date']}")
+
+    amount = _prompt_until_valid("New amount (Enter to keep current): ",
+                                 validators.validate_amount,
+                                 default=str(expense['amount']))
+    category = _prompt_until_valid("New category ID (Enter to keep current): ",
+                                   validators.validate_category,
+                                   default=str(expense['category_id']))
+    description = _prompt_until_valid("New description (Enter to keep current): ",
+                                      validators.validate_description,
+                                      default=expense['description'])
+    expense_date = _prompt_until_valid("New expense date (YYYY-MM-DD) (Enter to keep current): ",
+                                       validators.validate_expense_date,
+                                       default=expense['expense_date'])
+
+    try:
+        services.update_expense(conn, user, expense_id, amount, category, description, expense_date)
+        print(f"Expense {expense_id} updated")
+    except ExpenseManagerError as e:
+        print(f"Failed to update expense: {e}")
+
+def delete_expense_menu(conn: sql.Connection, user: sql.Row):
+    print("Delete Pending Expense")
+    expense_id = _prompt_until_valid("Expense ID: ", validators.validate_expense_id)
+
+    try:
+        expense = services.get_own_pending_expense(conn, user, expense_id)
+    except ExpenseManagerError as e:
+        print(f"Failed to retrieve expense: {e}")
+        return
+
+    print(
+        f"About to delete expense: ID={expense_id}, "
+        f"amount={expense['amount']}, "
+        f"category_id={expense['category_id']}, "
+        f"description={expense['description']!r}, "
+        f"date={expense['expense_date']}"
+    )
+    confirm = input("Confirm delete? (y/Y to confirm, any other key to cancel): ")
+    if confirm.lower() != 'y':
+        print("Delete cancelled.")
+        return
+
+    try:
+        services.delete_expense(conn, user, expense_id)
+        print(f"Expense {expense_id} deleted")
+    except ExpenseManagerError as e:
+        print(f"Failed to delete expense: {e}")
+
 
 def employee_menu(conn: sql.Connection, user):
     while True:
@@ -133,9 +197,9 @@ def employee_menu(conn: sql.Connection, user):
         elif choice == "2":
             view_expenses_menu(conn, user)
         elif choice == "3":
-            print("Edit pending expense is not implemented.")
+            edit_expense_menu(conn, user)
         elif choice == "4":
-            print("Delete pending expense is not implemented.")
+            delete_expense_menu(conn, user)
         elif choice == "5":
             print("Review history is not implemented.")
         else:
