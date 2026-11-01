@@ -8,9 +8,9 @@ MENU = """
 ----- Employee Expense Manager -----
 1. Submit expense
 2. View my expenses
-3. Edit pending expense (Not implemented)
-4. Delete pending expense (Not implemented)
-5. Review history (Not implemented)
+3. Edit pending expense
+4. Delete pending expense
+5. Review history
 0. Exit"""
 
 MENU_VIEW_EXPENSES = """
@@ -184,6 +184,26 @@ def delete_expense_menu(conn: sql.Connection, user: sql.Row):
     except ExpenseManagerError as e:
         print(f"Failed to delete expense: {e}")
 
+def view_review_history_menu(conn: sql.Connection, user: sql.Row):
+    print("Review History")
+
+    try:
+        rows = services.get_review_history(conn, user)
+    except ExpenseManagerError as e:
+        print(f"Failed to load review history: {e}")
+        return
+
+    if not rows:
+        print("No review history found.")
+        return
+
+    header = f"{'Expense ID':<10} | {'Status':<10} | {'Reviewer':<20} | {'Review Date':<15} | Comment"
+    print(header)
+    print("-" * len(header))
+    for row in rows:
+        comment = row['comment'] if row['comment'] else '(no comment)'
+        print(f"{row['id']:<10} | {row['status']:<10} | {row['reviewer']:<20} | {row['review_date']:<15} | {comment}")
+        
 
 def employee_menu(conn: sql.Connection, user):
     while True:
@@ -201,6 +221,6 @@ def employee_menu(conn: sql.Connection, user):
         elif choice == "4":
             delete_expense_menu(conn, user)
         elif choice == "5":
-            print("Review history is not implemented.")
+            view_review_history_menu(conn, user)
         else:
             print("Invalid option.")
