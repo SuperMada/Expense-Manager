@@ -67,7 +67,6 @@ public class Services {
 
     public static List<List<Object>> getExpensesFromID(Connection conn, int option)
         throws SQLException{
-        //Don't use expense us list of list of objects
         List<List<Object>> results = new ArrayList<>();
         String sql = "";
         if(option == 1){
@@ -111,6 +110,44 @@ public class Services {
             //If the user is not a manager
             throw new AuthorizationException("This account does not have access to this app.");
         }
+    }
+
+    public static String getRole(Connection conn, int id)
+        throws SQLException{
+        String role = "";
+        String sql = """
+                    SELECT role
+                    FROM users
+                    WHERE id = ?;
+                    """;
+        try (PreparedStatement ps = conn.prepareStatement(sql)){
+            ps.setInt(1, id);
+            try(ResultSet rs = ps.executeQuery()){
+                if(rs.next()){
+                    role = rs.getString("role");
+                }
+            }
+        }
+        return role;
+    }
+
+    public static String getCategory(Connection conn, int id)
+        throws SQLException{
+        String role = "";
+        String sql = """
+                    SELECT name
+                    FROM categories
+                    WHERE id = ?;
+                    """;
+        try (PreparedStatement ps = conn.prepareStatement(sql)){
+            ps.setInt(1, id);
+            try(ResultSet rs = ps.executeQuery()){
+                if(rs.next()){
+                    role = rs.getString("name");
+                }
+            }
+        }
+        return role;
     }
 
     public static String isPendingReport(Connection conn, int id)
@@ -168,6 +205,57 @@ public class Services {
             ps.setString(3, review_date);
             ps.setInt(4, expense_id);
             return ps.executeUpdate();
+        }
+    }
+
+    public static List<List<Object>> getEmployeeReport(Connection conn, int user_id)
+        throws SQLException{
+        List<List<Object>> results = new ArrayList<>();
+        String sql = """
+            SELECT u.full_name as name, COUNT(*) as totalReports, SUM(ex.amount) as totalAmount, SUM(CASE WHEN a.status = 'approved' THEN 1 ELSE 0 END) as totalApproved
+            FROM users u
+            JOIN expenses ex ON u.id = ex.user_id 
+            JOIN approvals a ON ex.id = a.expense_id
+            WHERE u.id = ?
+            GROUP BY u.id;
+            """;
+        try (PreparedStatement ps = conn.prepareStatement(sql)){
+            ps.setInt(1, user_id);
+            try(ResultSet rs = ps.executeQuery()){
+                while(rs.next()){
+                    List<Object> result = new ArrayList<>();
+                    for(int i = 1; i<=4; i++){
+                        result.add(rs.getObject(i));
+                    }
+                    results.add(result);
+                }
+                return results;
+            }
+        }
+    }
+    public static List<List<Object>> getCategoryReport(Connection conn, int category_id)
+        throws SQLException{
+        List<List<Object>> results = new ArrayList<>();
+            String sql = """
+            SELECT c.name as name, COUNT(*) as totalReports, SUM(ex.amount) as totalAmount, SUM(CASE WHEN a.status = 'approved' THEN 1 ELSE 0 END) as totalApproved
+            FROM categories c 
+            JOIN expenses ex ON c.id = ex.category_id 
+            JOIN approvals a ON ex.id = a.expense_id
+            WHERE c.id = ?
+            GROUP BY c.id; 
+            """;
+        try (PreparedStatement ps = conn.prepareStatement(sql)){
+            ps.setInt(1, category_id);
+            try(ResultSet rs = ps.executeQuery()){
+                while(rs.next()){
+                    List<Object> result = new ArrayList<>();
+                    for(int i = 1; i<=4; i++){
+                        result.add(rs.getObject(i));
+                    }
+                    results.add(result);
+                }
+                return results;
+            }
         }
     }
 }

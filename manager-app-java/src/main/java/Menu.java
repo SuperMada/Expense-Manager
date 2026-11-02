@@ -4,8 +4,6 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Scanner;
 
-import javax.xml.validation.Validator;
-
 import exceptions.AuthenticationException;
 import exceptions.AuthorizationException;
 
@@ -102,10 +100,100 @@ public class Menu {
                 reviewExpenses(conn, in, user);
             } else if(option == 3){
                 //Call reports
+                viewReports(conn, in);
             } else{
                 System.out.println("Please enter a valid option.\n");
                 continue;
             }
+        }
+    }
+
+    public static void viewReports(Connection conn, Scanner in){
+        String sort = "";
+        int sort_id = -1;
+        while(true){
+            System.out.println("Would you like to create report on Employee('e') or Category('c'): ");
+            String sort_input = in.nextLine();
+            System.out.println();
+            if(sort_input.equals("e") || sort_input.equals("c")){
+                sort = sort_input;
+                break;
+            }
+            System.out.println("Please enter a valid selection e/c");
+        }
+        if(sort.equals("e")){
+            int option = -1;
+            String role = "";
+            while(true){
+                System.out.println("Please enter the ID of the user you would like the report for: ");
+                String user_input = in.nextLine();
+                System.out.println();
+                try{
+                    option = Integer.parseInt(user_input);
+                } catch(NumberFormatException e){
+                    System.out.println("Please enter an integer ID.\n");
+                    continue;
+                }
+                try{
+                    role = Services.getRole(conn, option);
+                } catch(SQLException e){
+                    System.out.println("Unexpected error occured");
+                }
+                if(role.equals("")){
+                    System.out.printf("User with ID: %d does not exist\n", option);
+                    continue;
+                } else if(role.equals("manager")){
+                    System.out.printf("User with ID: %d is a manager, no report to show\n", option);
+                    continue;
+                } else{
+                    sort_id = option;
+                    break;
+                }
+            }
+            //Call the employee report
+            try{
+                List<List<Object>> data = Services.getEmployeeReport(conn, option);
+                if(data.isEmpty()){
+                    System.out.println("No pending expenses.\n");
+                } else{
+                    for(List<Object> row : data){
+                    System.out.printf("Employee Name: %s, Total Reports: %d, Total Amount: $%.2f, Total Approved: %d\n", row.get(0), row.get(1), row.get(2), row.get(3));
+                    }
+                    System.out.println("\n\nPress ENTER to return to main menu");
+                    in.nextLine();
+                }
+
+            } catch(SQLException e){
+                System.out.println("An unexpected error has occured");
+            }
+
+        } else{
+            int option = -1;
+            String category = "";
+            while(true){
+                System.out.println("Please enter the ID of the category you would like the report for: ");
+                String user_input = in.nextLine();
+                System.out.println();
+                try{
+                    option = Integer.parseInt(user_input);
+                } catch(NumberFormatException e){
+                    System.out.println("Please enter an integer ID.\n");
+                    continue;
+                }
+                try{
+                    category = Services.getRole(conn, option);
+                } catch(SQLException e){
+                    System.out.println("Unexpected error occured");
+                }
+                if(category.equals("")){
+                    System.out.printf("Category with ID: %d does not exist\n", option);
+                    continue;
+                } else{
+                    sort_id = option;
+                    break;
+                }
+            }
+            //Call the category report
         }
     }
 
@@ -212,7 +300,6 @@ public class Menu {
                         } else{
                             System.out.println("Unexpected error, please try again");
                         }
-
                     }
                 }
             } else{
