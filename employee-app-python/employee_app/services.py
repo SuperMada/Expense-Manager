@@ -133,3 +133,22 @@ def delete_expense(conn: sql.Connection, user: sql.Row, expense_id: int):
         )
     except sql.Error as e:
         raise DatabaseError(f"Database error: {e}")
+
+
+def get_review_history(conn: sql.Connection, user: sql.Row):
+    role_required(user, "employee")
+
+    try:
+        rows = conn.execute(
+            "SELECT e.id, a.status, a.review_date, a.comment, r.full_name as reviewer "
+            "FROM expenses e "
+            "INNER JOIN approvals a ON e.id = a.expense_id "
+            "INNER JOIN users r ON a.reviewer_id = r.id "
+            "WHERE e.user_id = ? AND a.status IN ('approved', 'denied') "
+            "ORDER BY a.review_date DESC, e.id DESC",
+            (user["id"],)
+        ).fetchall()
+    except sql.Error as e:
+        raise DatabaseError(f"Database error: {e}")
+
+    return rows
