@@ -194,6 +194,21 @@ public class Menu {
                 }
             }
             //Call the category report
+            try{
+                List<List<Object>> data = Services.getCategoryReport(conn, option);
+                if(data.isEmpty()){
+                    System.out.println("No pending expenses.\n");
+                } else{
+                    for(List<Object> row : data){
+                    System.out.printf("Category Name: %s, Total Reports: %d, Total Amount: $%.2f, Total Approved: %d\n", row.get(0), row.get(1), row.get(2), row.get(3));
+                    }
+                    System.out.println("\n\nPress ENTER to return to main menu");
+                    in.nextLine();
+                }
+
+            } catch(SQLException e){
+                System.out.println("An unexpected error has occured");
+            }
         }
     }
 
