@@ -3,6 +3,7 @@ import sys
 from datetime import date
 from employee_app import services, validators
 from employee_app.exceptions import AuthenticationError, AuthorizationError, ValidationError, ExpenseManagerError
+from employee_app import database
 
 MENU = """
 ----- Employee Expense Manager -----
@@ -38,13 +39,14 @@ def _prompt_until_valid(prompt: str, validate: callable, default=None):
         except ValidationError as e:
             print(e)
 
-def login_menu(conn: sql.Connection, expected_role: str):
+def login_menu(expected_role: str):
     attempts = 0
     while True:
         username = _read_input("Username: ")
         password = _read_input("Password: ")
         try:
-            user = services.authenticate_user(conn, username, password)
+            with database.get_connection() as conn:
+                user = services.authenticate_user(conn, username, password)
         except AuthenticationError:
             print("Invalid username or password")
             attempts += 1
@@ -63,7 +65,7 @@ def login_menu(conn: sql.Connection, expected_role: str):
         print(f"Welcome, {user['full_name']}!")
         return user
 
-def submit_expense_menu(conn: sql.Connection, user: sql.Row):
+def submit_expense_menu(user: sql.Row):
     print("Submit Expense")
 
     amount = _prompt_until_valid("Amount: ", validators.validate_amount)
@@ -84,13 +86,14 @@ def submit_expense_menu(conn: sql.Connection, user: sql.Row):
             print(e)
 
     try:
-        expense_id = services.submit_expense(conn, user, amount, category, description, expense_date)
+        with database.get_connection() as conn:
+            expense_id = services.submit_expense(conn, user, amount, category, description, expense_date)
         print(f"Expense submitted. ID: {expense_id}")
     except ExpenseManagerError as e:
         print(f"Failed to submit expense: {e}")
 
 
-def view_expenses_menu(conn: sql.Connection, user: sql.Row):
+def view_expenses_menu(user: sql.Row):
     print(MENU_VIEW_EXPENSES)
     while True:
         choice = input("Select a status: ").strip()
@@ -108,7 +111,8 @@ def view_expenses_menu(conn: sql.Connection, user: sql.Row):
         break
 
     try:
-        rows = services.get_own_expenses(conn, user, status)
+        with database.get_connection() as conn:
+            rows = services.get_own_expenses(conn, user, status)
     except ExpenseManagerError as e:
         print(f"Failed to view expenses: {e}")
         return
@@ -124,12 +128,13 @@ def view_expenses_menu(conn: sql.Connection, user: sql.Row):
         print(f"{row['id']:<5} | {row['expense_date']:<12} | {row['category']:<16} | ${row['amount']:<10.2f} | {row['status']:<10}")
 
 
-def edit_expense_menu(conn: sql.Connection, user: sql.Row):
+def edit_expense_menu(user: sql.Row):
     print("Edit Expense")
     expense_id = _prompt_until_valid("Expense ID: ", validators.validate_expense_id)
 
     try:
-        expense = services.get_own_pending_expense(conn, user, expense_id)
+        with database.get_connection() as conn:
+            expense = services.get_own_pending_expense(conn, user, expense_id)
     except ExpenseManagerError as e:
         print(f"Failed to retrieve expense: {e}")
         return
@@ -151,17 +156,19 @@ def edit_expense_menu(conn: sql.Connection, user: sql.Row):
                                        default=expense['expense_date'])
 
     try:
-        services.update_expense(conn, user, expense_id, amount, category, description, expense_date)
+        with database.get_connection() as conn:
+            services.update_expense(conn, user, expense_id, amount, category, description, expense_date)
         print(f"Expense {expense_id} updated")
     except ExpenseManagerError as e:
         print(f"Failed to update expense: {e}")
 
-def delete_expense_menu(conn: sql.Connection, user: sql.Row):
+def delete_expense_menu(user: sql.Row):
     print("Delete Pending Expense")
     expense_id = _prompt_until_valid("Expense ID: ", validators.validate_expense_id)
 
     try:
-        expense = services.get_own_pending_expense(conn, user, expense_id)
+        with database.get_connection() as conn:
+            expense = services.get_own_pending_expense(conn, user, expense_id)
     except ExpenseManagerError as e:
         print(f"Failed to retrieve expense: {e}")
         return
@@ -179,16 +186,18 @@ def delete_expense_menu(conn: sql.Connection, user: sql.Row):
         return
 
     try:
-        services.delete_expense(conn, user, expense_id)
+        with database.get_connection() as conn:
+            services.delete_expense(conn, user, expense_id)
         print(f"Expense {expense_id} deleted")
     except ExpenseManagerError as e:
         print(f"Failed to delete expense: {e}")
 
-def view_review_history_menu(conn: sql.Connection, user: sql.Row):
+def view_review_history_menu(user: sql.Row):
     print("Review History")
 
     try:
-        rows = services.get_review_history(conn, user)
+        with database.get_connection() as conn:
+            rows = services.get_review_history(conn, user)
     except ExpenseManagerError as e:
         print(f"Failed to load review history: {e}")
         return
@@ -205,7 +214,7 @@ def view_review_history_menu(conn: sql.Connection, user: sql.Row):
         print(f"{row['id']:<10} | {row['status']:<10} | {row['reviewer']:<20} | {row['review_date']:<15} | {comment}")
         
 
-def employee_menu(conn: sql.Connection, user):
+def employee_menu(user):
     while True:
         print(MENU)
 
@@ -213,14 +222,14 @@ def employee_menu(conn: sql.Connection, user):
         if choice == "0":
             return
         elif choice == "1":
-            submit_expense_menu(conn, user)
+            submit_expense_menu(user)
         elif choice == "2":
-            view_expenses_menu(conn, user)
+            view_expenses_menu(user)
         elif choice == "3":
-            edit_expense_menu(conn, user)
+            edit_expense_menu(user)
         elif choice == "4":
-            delete_expense_menu(conn, user)
+            delete_expense_menu(user)
         elif choice == "5":
-            view_review_history_menu(conn, user)
+            view_review_history_menu(user)
         else:
             print("Invalid option.")
