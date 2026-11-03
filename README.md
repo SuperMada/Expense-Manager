@@ -45,6 +45,7 @@ Creates all tables, constraints, and seed data (2 managers, 4 employees,
 ### 3. Install Python + dependencies
 
 ```bash
+cd employee-app-python
 python -m venv venv
 # Linux/macOS
 source venv/bin/activate
