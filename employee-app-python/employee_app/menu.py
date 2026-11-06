@@ -1,5 +1,6 @@
 import sqlite3 as sql
 import sys
+import getpass
 from datetime import date
 from employee_app import services, validators
 from employee_app.exceptions import AuthenticationError, AuthorizationError, ValidationError, ExpenseManagerError
@@ -22,9 +23,12 @@ MENU_VIEW_EXPENSES = """
 4. Denied
 """
 
-def _read_input(prompt: str):
+def _read_input(prompt: str, mask=False):
     while True:
-        value = input(prompt).strip()
+        if mask:
+            value = getpass.getpass(prompt).strip()
+        else:
+            value = input(prompt).strip()
         if value:
             return value
 
@@ -43,7 +47,7 @@ def login_menu(expected_role: str):
     attempts = 0
     while True:
         username = _read_input("Username: ")
-        password = _read_input("Password: ")
+        password = _read_input("Password: ", mask=True)
         try:
             with database.get_connection() as conn:
                 user = services.authenticate_user(conn, username, password)
@@ -69,8 +73,11 @@ def submit_expense_menu(user: sql.Row):
     print("Submit Expense")
 
     amount = _prompt_until_valid("Amount: ", validators.validate_amount)
-    description = _prompt_until_valid("Description: ", validators.validate_description)
+    print("Available categories:")
+    for id, name in services.get_categories():
+        print(f"{id}. {name}")
     category = _prompt_until_valid("Category: ", validators.validate_category)
+    description = _prompt_until_valid("Description: ", validators.validate_description)
 
     # Date of the expense, defaults to today if not provided
     while True:
