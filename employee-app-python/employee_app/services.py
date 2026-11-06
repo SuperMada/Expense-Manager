@@ -14,9 +14,21 @@ def authenticate_user(conn: sql.Connection, username, password):
 
     return row
 
+
 def role_required(user, expected_role):
     if user is None or user["role"] != expected_role:
         raise AuthorizationError(f"This account does not have access to this app.")
+
+
+def get_categories():
+    return [
+        (1, "Travel"),
+        (2, "Meals"),
+        (3, "Lodging"),
+        (4, "Office Supplies"),
+        (5, "Training"),
+        (6, "Other")
+    ]
 
 
 def submit_expense(conn: sql.Connection,
