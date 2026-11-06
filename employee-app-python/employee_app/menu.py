@@ -73,11 +73,11 @@ def submit_expense_menu(user: sql.Row):
     print("Submit Expense")
 
     amount = _prompt_until_valid("Amount: ", validators.validate_amount)
-    description = _prompt_until_valid("Description: ", validators.validate_description)
     print("Available categories:")
     for id, name in services.get_categories():
         print(f"{id}. {name}")
     category = _prompt_until_valid("Category: ", validators.validate_category)
+    description = _prompt_until_valid("Description: ", validators.validate_description)
 
     # Date of the expense, defaults to today if not provided
     while True:
