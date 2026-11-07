@@ -48,6 +48,14 @@ def _prompt_until_valid(prompt: str, validate: callable, default=None):
             print(e)
 
 
+def _handle_operation_error(operation: str, error: ExpenseManagerError, user_id):
+    log.warning("%s failed for user_id = %s: %s", operation, user_id, error)
+    if isinstance(error, DatabaseError):
+        print("Unexpected error. See log.")
+    else:
+        print(f"Failed to {operation}: {error}")
+
+
 def login_menu(expected_role: str):
     attempts = 0
     while True:
@@ -100,8 +108,7 @@ def submit_expense_menu(user: sql.Row):
         with database.get_connection() as conn:
             expense_id = services.submit_expense(conn, user, amount, category, description, expense_date)
     except ExpenseManagerError as e:
-        log.warning("Submit expense failed for user_id = %s: %s", user['id'], e)
-        print(f"Failed to submit expense: {e}")
+        _handle_operation_error("submit expense", e, user['id'])
         return
 
     log.info(
@@ -131,8 +138,7 @@ def view_expenses_menu(user: sql.Row):
         with database.get_connection() as conn:
             rows = services.get_own_expenses(conn, user, status)
     except ExpenseManagerError as e:
-        log.warning("View expenses failed for user_id= %s: %s", user['id'], e)
-        print(f"Failed to view expenses: {e}")
+        _handle_operation_error("view expenses", e, user['id'])
         return
     
     if not rows:
@@ -154,11 +160,7 @@ def edit_expense_menu(user: sql.Row):
         with database.get_connection() as conn:
             expense = services.get_own_pending_expense(conn, user, expense_id)
     except ExpenseManagerError as e:
-        log.warning(
-            "Retrieve pending expense failed for user_id= %s: %s",
-            user['id'], e
-        )
-        print(f"Failed to retrieve expense: {e}")
+        _handle_operation_error("retrieve pending expense", e, user['id'])
         return
 
     # Print which expense is being edited
@@ -189,11 +191,7 @@ def edit_expense_menu(user: sql.Row):
         with database.get_connection() as conn:
             services.update_expense(conn, user, expense_id, amount, category, description, expense_date)
     except ExpenseManagerError as e:
-        log.warning(
-            "Failed to update expense for user_id=%s, expense_id=%s: %s",
-            user['id'], expense_id, e
-        )
-        print(f"Failed to update expense: {e}")
+        _handle_operation_error("update expense", e, user['id'])
         return
 
     log.info(
@@ -211,11 +209,7 @@ def delete_expense_menu(user: sql.Row):
         with database.get_connection() as conn:
             expense = services.get_own_pending_expense(conn, user, expense_id)
     except ExpenseManagerError as e:
-        log.warning(
-            "Failed to retrieve pending expense for user_id=%s, expense_id=%s: %s",
-            user['id'], expense_id, e
-        )
-        print(f"Failed to retrieve expense: {e}")
+        _handle_operation_error("retrieve pending expense", e, user['id'])
         return
 
     print(
@@ -234,11 +228,7 @@ def delete_expense_menu(user: sql.Row):
         with database.get_connection() as conn:
             services.delete_expense(conn, user, expense_id)
     except ExpenseManagerError as e:
-        log.warning(
-            "Failed to delete expense for user_id=%s, expense_id=%s: %s",
-            user['id'], expense_id, e
-        )
-        print(f"Failed to delete expense: {e}")
+        _handle_operation_error("delete expense", e, user['id'])
         return
 
     log.info(
@@ -254,11 +244,7 @@ def view_review_history_menu(user: sql.Row):
         with database.get_connection() as conn:
             rows = services.get_review_history(conn, user)
     except ExpenseManagerError as e:
-        log.warning(
-            "Failed to load review history for user_id=%s: %s",
-            user['id'], e
-        )
-        print(f"Failed to load review history: {e}")
+        _handle_operation_error("load review history", e, user['id'])
         return
 
     if not rows:

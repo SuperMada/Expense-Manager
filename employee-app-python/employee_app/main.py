@@ -9,6 +9,7 @@ from employee_app.exceptions import ExpenseManagerError
 def main():
     logger.setup_logger()
     log = logger.get_logger()
+    log.info("Starting fresh run of employee app.")
 
     try:
         user = menu.login_menu(expected_role="employee")
