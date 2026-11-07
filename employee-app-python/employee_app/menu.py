@@ -3,8 +3,11 @@ import sys
 import getpass
 from datetime import date
 from employee_app import services, validators
-from employee_app.exceptions import AuthenticationError, AuthorizationError, ValidationError, ExpenseManagerError
+from employee_app.exceptions import AuthenticationError, AuthorizationError, ValidationError, ExpenseManagerError, DatabaseError
 from employee_app import database
+from employee_app import logger
+
+log = logger.get_logger()
 
 MENU = """
 ----- Employee Expense Manager -----
@@ -41,7 +44,17 @@ def _prompt_until_valid(prompt: str, validate: callable, default=None):
                 value = default
             return validate(value)
         except ValidationError as e:
+            log.warning("Validation error (retrying): %s", e)
             print(e)
+
+
+def _handle_operation_error(operation: str, error: ExpenseManagerError, user_id):
+    log.warning("%s failed for user_id = %s: %s", operation, user_id, error)
+    if isinstance(error, DatabaseError):
+        print("Unexpected error. See log.")
+    else:
+        print(f"Failed to {operation}: {error}")
+
 
 def login_menu(expected_role: str):
     attempts = 0
@@ -52,9 +65,11 @@ def login_menu(expected_role: str):
             with database.get_connection() as conn:
                 user = services.authenticate_user(conn, username, password)
         except AuthenticationError:
-            print("Invalid username or password")
             attempts += 1
+            log.warning("Failed login attempt for username: %s (attempt %d/3)", username, attempts)
+            print("Invalid username or password.")
             if attempts >= 3:
+                log.error("Too many failed login attempts, closing application.")
                 print("Too many failed attempts.")
                 sys.exit(1)
             continue
@@ -62,9 +77,14 @@ def login_menu(expected_role: str):
         try:
             services.role_required(user, expected_role)
         except AuthorizationError:
+            log.error(
+                "Login denied (wrong role): user: %s's role is %s, expected role %s",
+                user['username'], user['role'], expected_role
+            )
             print("This account does not have access to this app.")
             sys.exit(1)
 
+        log.info("Login successful for user: %s", user['username'])
         print()
         print(f"Welcome, {user['full_name']}!")
         return user
@@ -78,27 +98,24 @@ def submit_expense_menu(user: sql.Row):
         print(f"{id}. {name}")
     category = _prompt_until_valid("Category: ", validators.validate_category)
     description = _prompt_until_valid("Description: ", validators.validate_description)
-
-    # Date of the expense, defaults to today if not provided
-    while True:
-        raw = input("Date (YYYY-MM-DD) (Enter for today): ")
-        try:
-            # if input is empty, default to today
-            if not raw:
-                expense_date = date.today().isoformat()
-            else:
-                expense_date = validators.validate_expense_date(raw)
-            break
-        except ValidationError as e:
-            print(e)
+    expense_date = _prompt_until_valid(
+        "Date (YYYY-MM-DD) (Enter for today): ",
+        validators.validate_expense_date,
+        default=date.today().isoformat()
+    )
 
     try:
         with database.get_connection() as conn:
             expense_id = services.submit_expense(conn, user, amount, category, description, expense_date)
-        print(f"Expense submitted. ID: {expense_id}")
     except ExpenseManagerError as e:
-        print(f"Failed to submit expense: {e}")
+        _handle_operation_error("submit expense", e, user['id'])
+        return
 
+    log.info(
+        "Expense submitted for '%s': user_id= %s, expense_id= %s",
+        user['username'], user['id'], expense_id
+    )
+    print(f"Expense submitted. ID: {expense_id}")
 
 def view_expenses_menu(user: sql.Row):
     print(MENU_VIEW_EXPENSES)
@@ -121,7 +138,7 @@ def view_expenses_menu(user: sql.Row):
         with database.get_connection() as conn:
             rows = services.get_own_expenses(conn, user, status)
     except ExpenseManagerError as e:
-        print(f"Failed to view expenses: {e}")
+        _handle_operation_error("view expenses", e, user['id'])
         return
     
     if not rows:
@@ -143,31 +160,46 @@ def edit_expense_menu(user: sql.Row):
         with database.get_connection() as conn:
             expense = services.get_own_pending_expense(conn, user, expense_id)
     except ExpenseManagerError as e:
-        print(f"Failed to retrieve expense: {e}")
+        _handle_operation_error("retrieve pending expense", e, user['id'])
         return
 
     # Print which expense is being edited
     print(f"Current: amount= {expense['amount']}, category_id= {expense['category_id']}, description= {expense['description']!r}, date= {expense['expense_date']}")
 
-    amount = _prompt_until_valid("New amount (Enter to keep current): ",
-                                 validators.validate_amount,
-                                 default=str(expense['amount']))
-    category = _prompt_until_valid("New category ID (Enter to keep current): ",
-                                   validators.validate_category,
-                                   default=str(expense['category_id']))
-    description = _prompt_until_valid("New description (Enter to keep current): ",
-                                      validators.validate_description,
-                                      default=expense['description'])
-    expense_date = _prompt_until_valid("New expense date (YYYY-MM-DD) (Enter to keep current): ",
-                                       validators.validate_expense_date,
-                                       default=expense['expense_date'])
+    amount = _prompt_until_valid(
+        "New amount (Enter to keep current): ",
+        validators.validate_amount,
+        default=str(expense['amount'])
+    )
+    category = _prompt_until_valid(
+        "New category ID (Enter to keep current): ",
+        validators.validate_category,
+        default=str(expense['category_id'])
+    )
+    description = _prompt_until_valid(
+        "New description (Enter to keep current): ",
+        validators.validate_description,
+        default=expense['description']
+    )
+    expense_date = _prompt_until_valid(
+        "New expense date (YYYY-MM-DD) (Enter to keep current): ",
+        validators.validate_expense_date,
+        default=expense['expense_date']
+    )
 
     try:
         with database.get_connection() as conn:
             services.update_expense(conn, user, expense_id, amount, category, description, expense_date)
-        print(f"Expense {expense_id} updated")
     except ExpenseManagerError as e:
-        print(f"Failed to update expense: {e}")
+        _handle_operation_error("update expense", e, user['id'])
+        return
+
+    log.info(
+        "Expense updated: user_id=%s, expense_id=%s, amount=%s, category_id=%s, description=%s, expense_date=%s",
+        user['id'], expense_id, amount, category, description, expense_date
+    )
+    print(f"Expense {expense_id} updated")
+
 
 def delete_expense_menu(user: sql.Row):
     print("Delete Pending Expense")
@@ -177,7 +209,7 @@ def delete_expense_menu(user: sql.Row):
         with database.get_connection() as conn:
             expense = services.get_own_pending_expense(conn, user, expense_id)
     except ExpenseManagerError as e:
-        print(f"Failed to retrieve expense: {e}")
+        _handle_operation_error("retrieve pending expense", e, user['id'])
         return
 
     print(
@@ -195,9 +227,15 @@ def delete_expense_menu(user: sql.Row):
     try:
         with database.get_connection() as conn:
             services.delete_expense(conn, user, expense_id)
-        print(f"Expense {expense_id} deleted")
     except ExpenseManagerError as e:
-        print(f"Failed to delete expense: {e}")
+        _handle_operation_error("delete expense", e, user['id'])
+        return
+
+    log.info(
+        "Expense deleted: user_id=%s, expense_id=%s",
+        user['id'], expense_id
+    )
+    print(f"Expense {expense_id} deleted")
 
 def view_review_history_menu(user: sql.Row):
     print("Review History")
@@ -206,7 +244,7 @@ def view_review_history_menu(user: sql.Row):
         with database.get_connection() as conn:
             rows = services.get_review_history(conn, user)
     except ExpenseManagerError as e:
-        print(f"Failed to load review history: {e}")
+        _handle_operation_error("load review history", e, user['id'])
         return
 
     if not rows:
