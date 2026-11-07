@@ -6,6 +6,7 @@ import java.util.Scanner;
 
 import exceptions.AuthenticationException;
 import exceptions.AuthorizationException;
+import exceptions.DatabaseException;
 
 
 public class Menu {
@@ -57,7 +58,7 @@ public class Menu {
                 //User not manager
                 System.out.println(e.getMessage());
                 System.exit(0);
-            } catch(SQLException e){
+            } catch(DatabaseException e){
                 System.out.println(e.getMessage());
             }
         }
@@ -136,8 +137,8 @@ public class Menu {
                 }
                 try{
                     role = Services.getRole(conn, option);
-                } catch(SQLException e){
-                    System.out.println("Unexpected error occured");
+                } catch(DatabaseException e){
+                    System.out.println(e.getMessage());
                 }
                 if(role.equals("")){
                     System.out.printf("User with ID: %d does not exist\n", option);
@@ -163,8 +164,8 @@ public class Menu {
                     in.nextLine();
                 }
 
-            } catch(SQLException e){
-                System.out.println("An unexpected error has occured");
+            } catch(DatabaseException e){
+                System.out.println(e.getMessage());
             }
 
         } else{
@@ -182,8 +183,8 @@ public class Menu {
                 }
                 try{
                     category = Services.getRole(conn, option);
-                } catch(SQLException e){
-                    System.out.println("Unexpected error occured");
+                } catch(DatabaseException e){
+                    System.out.println(e.getMessage());
                 }
                 if(category.equals("")){
                     System.out.printf("Category with ID: %d does not exist\n", option);
@@ -206,8 +207,8 @@ public class Menu {
                     in.nextLine();
                 }
 
-            } catch(SQLException e){
-                System.out.println("An unexpected error has occured");
+            } catch(DatabaseException e){
+                System.out.println(e.getMessage());
             }
         }
     }

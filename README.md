@@ -23,7 +23,7 @@ This is a **Quality Engineering and Automation** project. You will build both ap
 
 ### 1. Configure the database path
 
-Copy `.env.example` to `.env` and set `EM_DB_PATH` to an absolute path:
+Copy `.env.example` to `.env` in main directory and set `EM_DB_PATH` to an absolute path:
 
 ```
 EM_DB_PATH=C:/absolute/path/to/expense-manager/database/db.db

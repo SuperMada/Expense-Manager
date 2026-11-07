@@ -1,4 +1,3 @@
-import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 import java.sql.Connection;
@@ -8,10 +7,11 @@ import java.sql.SQLException;
 
 import exceptions.AuthenticationException;
 import exceptions.AuthorizationException;
+import exceptions.DatabaseException;
 
 public class Services {
     public static int login(Connection conn, String username, String password)
-        throws AuthenticationException, AuthorizationException, SQLException{
+        throws AuthenticationException, AuthorizationException{
             /*String sql = "INSERT INTO expenses (description, amount, category_id) VALUES (?, ?, ?)";
             try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, "Coffee");
@@ -46,12 +46,13 @@ public class Services {
                 }
                 role_required(role, "manager");
             }
+        } catch(SQLException e){
+                throw new DatabaseException("DB Error attempting to login");
         }
         return user;
     }
 
-    public static String getNameFromID(Connection conn, int id)
-        throws SQLException{
+    public static String getNameFromID(Connection conn, int id){
         String sql = "SELECT full_name FROM users WHERE id = ?;";
         String name = "";
         try (PreparedStatement ps = conn.prepareStatement(sql)){
@@ -61,12 +62,13 @@ public class Services {
                     name = rs.getString("full_name");
                 }
             }
+        } catch(SQLException e){
+                throw new DatabaseException("DB Error attempting to get name from ID");
         }
         return name;
     }
 
-    public static List<List<Object>> getExpensesFromID(Connection conn, int option)
-        throws SQLException{
+    public static List<List<Object>> getExpensesFromID(Connection conn, int option){
         List<List<Object>> results = new ArrayList<>();
         String sql = "";
         if(option == 1){
@@ -90,8 +92,8 @@ public class Services {
                     ORDER BY ex.amount;
                     """;
         }
-        try(Statement st = conn.createStatement();
-            ResultSet rs = st.executeQuery(sql)){
+        try(PreparedStatement st = conn.prepareStatement(sql);
+            ResultSet rs = st.executeQuery()){
             
             while(rs.next()){
                 List<Object> result = new ArrayList<>();
@@ -101,6 +103,8 @@ public class Services {
                 results.add(result);
             }
             return results;
+        } catch(SQLException e){
+            throw new DatabaseException("DB Error attempting to get Expenses from ID");
         }
     }
 
@@ -112,8 +116,7 @@ public class Services {
         }
     }
 
-    public static String getRole(Connection conn, int id)
-        throws SQLException{
+    public static String getRole(Connection conn, int id){
         String role = "";
         String sql = """
                     SELECT role
@@ -127,12 +130,13 @@ public class Services {
                     role = rs.getString("role");
                 }
             }
+        } catch(SQLException e){
+            throw new DatabaseException("DB Error attempting to get Role");
         }
         return role;
     }
 
-    public static String getCategory(Connection conn, int id)
-        throws SQLException{
+    public static String getCategory(Connection conn, int id){
         String role = "";
         String sql = """
                     SELECT name
@@ -146,12 +150,13 @@ public class Services {
                     role = rs.getString("name");
                 }
             }
+        } catch(SQLException e){
+            throw new DatabaseException("DB Error attempting to get Category");
         }
         return role;
     }
 
-    public static String isPendingReport(Connection conn, int id)
-        throws SQLException{
+    public static String isPendingReport(Connection conn, int id){
         String sql = """
                     SELECT status
                     FROM approvals
@@ -171,12 +176,13 @@ public class Services {
                     return "No report found under given ID\n";
                 }
             }
+        } catch(SQLException e){
+            throw new DatabaseException("DB Error attempting to check if report is pending");
         }
     }
 
     //Adding approval with comment
-    public static int updateApproval(Connection conn, String status, int reviewer_id, String comment, String review_date, int expense_id)
-        throws SQLException{
+    public static int updateApproval(Connection conn, String status, int reviewer_id, String comment, String review_date, int expense_id){
         String sql = """
                     UPDATE approvals
                     SET status = ?, reviewer_id = ?, comment = ?, review_date = ?
@@ -189,11 +195,12 @@ public class Services {
             ps.setString(4, review_date);
             ps.setInt(5, expense_id);
             return ps.executeUpdate();
+        } catch(SQLException e){
+            throw new DatabaseException("DB Error attempting to update approval");
         }
     }
     //Adding approval without comment
-    public static int updateApproval(Connection conn, String status, int reviewer_id, String review_date, int expense_id)
-        throws SQLException{
+    public static int updateApproval(Connection conn, String status, int reviewer_id, String review_date, int expense_id){
         String sql = """
                     UPDATE approvals
                     SET status = ?, reviewer_id = ?, review_date = ?
@@ -205,11 +212,12 @@ public class Services {
             ps.setString(3, review_date);
             ps.setInt(4, expense_id);
             return ps.executeUpdate();
+        } catch(SQLException e){
+            throw new DatabaseException("DB Error attempting to update approval");
         }
     }
 
-    public static List<List<Object>> getEmployeeReport(Connection conn, int user_id)
-        throws SQLException{
+    public static List<List<Object>> getEmployeeReport(Connection conn, int user_id){
         List<List<Object>> results = new ArrayList<>();
         String sql = """
             SELECT u.full_name as name, COUNT(*) as totalReports, SUM(ex.amount) as totalAmount, SUM(CASE WHEN a.status = 'approved' THEN 1 ELSE 0 END) as totalApproved
@@ -230,11 +238,14 @@ public class Services {
                     results.add(result);
                 }
                 return results;
+            } catch(SQLException e){
+                throw new DatabaseException("DB Error attempting to get employee report");
             }
+        } catch(SQLException e){
+            throw new DatabaseException("DB Error attempting to get employee report");
         }
     }
-    public static List<List<Object>> getCategoryReport(Connection conn, int category_id)
-        throws SQLException{
+    public static List<List<Object>> getCategoryReport(Connection conn, int category_id){
         List<List<Object>> results = new ArrayList<>();
             String sql = """
             SELECT c.name as name, COUNT(*) as totalReports, SUM(ex.amount) as totalAmount, SUM(CASE WHEN a.status = 'approved' THEN 1 ELSE 0 END) as totalApproved
@@ -256,6 +267,8 @@ public class Services {
                 }
                 return results;
             }
+        } catch(SQLException e){
+            throw new DatabaseException("DB Error attempting to get category report");
         }
     }
 }

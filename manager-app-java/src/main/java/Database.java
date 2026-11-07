@@ -7,6 +7,8 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
 
+import exceptions.NotFoundException;
+
 public class Database {
 
     private static final String ENV_VAR = "EM_DB_PATH";
@@ -24,9 +26,12 @@ public class Database {
                 }
             }
         }
+        if(value == null){
+            throw new NotFoundException(".env not found, please make sure .env exists and is the main dir");
+        }
 
-        if (value == null || value.isBlank()) {
-            throw new IOException(ENV_VAR + " is not set in " + ENV_FILE.toAbsolutePath());
+        if (value.isBlank()) {
+            throw new NotFoundException(ENV_VAR + " is not set in .env");
         }
 
         Path dbPath = Path.of(value);
