@@ -6,6 +6,7 @@ DESC_MSG = "Description must be 1-200 characters (including spaces)."
 CATEGORY_MSG = "Category must be 1-6."
 DATE_MSG = "Date must be YYYY-MM-DD, not in the future, and within the last 90 days."
 EXPENSE_ID_MSG = "Expense ID must be a positive whole number."
+MENU_CHOICE_MSG = "Invalid menu choice. Menu choice must be 0-6."
 
 
 def validate_amount(raw:str):
@@ -133,3 +134,21 @@ def validate_expense_id(raw:str):
         raise ValidationError(EXPENSE_ID_MSG)
 
     return expense_id
+
+def validate_menu_choice(raw:str):
+    """VR-09: Validate menu choice format and range.
+
+    Args:
+        raw (str): The raw input string representing the menu choice.
+
+    Returns:
+        int: The validated menu choice.
+
+    Raises:
+        ValidationError: If the menu choice is invalid.
+    """
+    raw = raw.strip()
+    if raw not in ["0", "1", "2", "3", "4", "5", "6"]:
+        raise ValidationError(MENU_CHOICE_MSG)
+
+    return int(raw)

@@ -263,18 +263,18 @@ def employee_menu(user):
     while True:
         print(MENU)
 
-        choice = input("Select an option: ")
-        if choice == "0":
+        choice =_prompt_until_valid("Select an option: ", validators.validate_menu_choice)
+        if choice == 0:
             return
-        elif choice == "1":
+        elif choice == 1:
             submit_expense_menu(user)
-        elif choice == "2":
+        elif choice == 2:
             view_expenses_menu(user)
-        elif choice == "3":
+        elif choice == 3:
             edit_expense_menu(user)
-        elif choice == "4":
+        elif choice == 4:
             delete_expense_menu(user)
-        elif choice == "5":
+        elif choice == 5:
             view_review_history_menu(user)
         else:
             print("Invalid option.")
