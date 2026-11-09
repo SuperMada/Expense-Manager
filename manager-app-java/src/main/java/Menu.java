@@ -58,6 +58,10 @@ public class Menu {
         }
     }
 
+    // public static String stringInput(Scanner in, String question){
+        
+    // }
+
     public static int loginMenu(Connection conn, Scanner in){
         String username = "";
         String password = "";
