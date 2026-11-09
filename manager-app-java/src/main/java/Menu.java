@@ -7,12 +7,13 @@ import java.util.Scanner;
 import exceptions.AuthenticationException;
 import exceptions.AuthorizationException;
 import exceptions.DatabaseException;
+import validation.Validators;
 
 
 public class Menu {
     static int TOTAL_LOGIN_ATTEMPTS = 3;
 
-    public static String loginUsername(Scanner in){
+    private static String loginUsername(Scanner in){
         String username = "";
         while(username.equals("")){
             System.out.print("Please Enter Your Username: ");
@@ -22,7 +23,7 @@ public class Menu {
         return username;
     }
 
-    public static String loginPassword(Scanner in){
+    private static String loginPassword(Scanner in){
         String password = "";
         while(password.equals("")){
             System.out.print("Please Enter Your Password: ");
@@ -32,7 +33,7 @@ public class Menu {
         return password;
     }
 
-    public static String charInput(Scanner in, String question, String option1, String option2){
+    private static String charInput(Scanner in, String question, String option1, String option2){
         String input = "";
         while(true){
             System.out.println(question);
@@ -45,7 +46,7 @@ public class Menu {
         return input;
     }
 
-    public static int integerInput(Scanner in, String question){
+    private static int integerInput(Scanner in, String question){
         while(true){
             System.out.println(question);
             String input = in.nextLine().strip();
@@ -125,13 +126,13 @@ public class Menu {
                 System.exit(0);
             } else if(option == 1){
                 //Call pending expenses
-                listExpenses(conn, in);
+                listExpenses(conn, in, user);
             } else if(option == 2){
                 //Call Rewview expenses
                 reviewExpenses(conn, in, user);
             } else if(option == 3){
                 //Call reports
-                viewReports(conn, in);
+                viewReports(conn, in, user);
             } else{
                 System.out.println("Please enter a valid option.\n");
                 continue;
@@ -139,14 +140,14 @@ public class Menu {
         }
     }
 
-    public static void viewReports(Connection conn, Scanner in){
+    private static void viewReports(Connection conn, Scanner in, int user){
         String sort = "";
         int sort_id = -1;
         sort = charInput(in, "Would you like to create report on Employee('e') or Category('c'): ", "e", "c");
         if(sort.equals("e")){
             //Call the employee report
             try{
-                List<List<Object>> data = Services.getEmployeeReport(conn);
+                List<List<Object>> data = Services.getEmployeeReport(conn, user);
                 if(data.isEmpty()){
                     System.out.println("No pending expenses.\n");
                 } else{
@@ -164,7 +165,7 @@ public class Menu {
         } else{
             //Call the category report
             try{
-                List<List<Object>> data = Services.getCategoryReport(conn);
+                List<List<Object>> data = Services.getCategoryReport(conn, user);
                 if(data.isEmpty()){
                     System.out.println("No pending expenses.\n");
                 } else{
@@ -181,7 +182,7 @@ public class Menu {
         }
     }
 
-    public static void reviewExpenses(Connection conn, Scanner in, int user)
+    private static void reviewExpenses(Connection conn, Scanner in, int user)
         throws SQLException{
         int expense_id = -1;
         String status = "";
@@ -272,7 +273,7 @@ public class Menu {
         }
     }
 
-    public static void listExpenses(Connection conn, Scanner in)
+    private static void listExpenses(Connection conn, Scanner in, int user)
         throws SQLException{
         int option = 0;
         while(true){
@@ -290,7 +291,7 @@ public class Menu {
             }
             break;
         }
-        List<List<Object>> data = Services.getExpensesFromID(conn, option);
+        List<List<Object>> data = Services.getExpensesFromID(conn, option, user);
         if(data.isEmpty()){
             System.out.println("No pending expenses.\n");
         } else{

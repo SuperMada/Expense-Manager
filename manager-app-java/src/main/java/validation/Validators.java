@@ -1,3 +1,4 @@
+package validation;
 public class Validators {
     private static int DENIAL_MIN = 5;
     private static int DENIAL_MAX = 200;

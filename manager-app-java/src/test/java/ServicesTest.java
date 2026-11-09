@@ -1,3 +1,4 @@
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
@@ -5,26 +6,36 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.List;
+import java.util.zip.DataFormatException;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
+import org.mockito.MockedStatic;
 import org.mockito.MockitoAnnotations;
 
+import exceptions.AuthenticationException;
+import exceptions.AuthorizationException;
+import exceptions.DatabaseException;
 
 //@ExtendWith(MockitoExtension.class)
-public class test_Services {
+public class ServicesTest {
 
     private AutoCloseable mocks;
 
@@ -38,17 +49,19 @@ public class test_Services {
         mocks.close();
     }
 
+    void db_default_mock() throws SQLException{
+        when(conn.prepareStatement(anyString())).thenReturn(ps);
+        when(ps.executeQuery()).thenReturn(rs);
+    }
+
     @Mock Connection conn;
     @Mock PreparedStatement ps;
     @Mock ResultSet rs;
 
+
     @Test 
     void test_manager_login_works() throws Exception{
-
-
-        when(conn.prepareStatement(anyString())).thenReturn(ps);
-        when(ps.executeQuery()).thenReturn(rs);
-
+        db_default_mock();
 
         when(rs.next()).thenReturn(true);
         when(rs.getInt("id")).thenReturn(1);
@@ -61,10 +74,28 @@ public class test_Services {
         verify(ps).setString(2, "Passw0rd!");
     }
 
+    @ParameterizedTest 
+    @CsvSource({"mgr_john, bad_password",
+                "bad_username, Passw0rd!",
+                "bad_username, bad_password"})
+    void test_manager_login_stops_invalid_username_password_input(String username, String password) throws SQLException {
+        db_default_mock();
+        
+        when(rs.next()).thenReturn(false);
+        assertThrows(AuthenticationException.class, () -> Services.login(conn, username, password));
+    }
+
+    @Test
+    void test_manager_login_on_db_error() throws Exception{
+        Connection conn = mock(Connection.class);
+        when(conn.prepareStatement(anyString())).thenThrow(new SQLException("boom"));
+
+        assertThrows(DatabaseException.class, () -> Services.login(conn, "db", "Blowup"));
+    }
+
     @Test 
     void test_get_name_from_id_works() throws Exception{
-        when(conn.prepareStatement(anyString())).thenReturn(ps);
-        when(ps.executeQuery()).thenReturn(rs);
+        db_default_mock();
         when(rs.next()).thenReturn(true);
         when(rs.getString("full_name")).thenReturn("John Doe");
 
@@ -75,9 +106,16 @@ public class test_Services {
     }
 
     @Test
+    void test_manager_get_name_on_db_error() throws Exception{
+        Connection conn = mock(Connection.class);
+        when(conn.prepareStatement(anyString())).thenThrow(new SQLException("boom"));
+
+        assertThrows(DatabaseException.class, () -> Services.getNameFromID(conn, 1));
+    }
+
+    @Test
     void test_get_expenses_option_1_orders_by_date_works() throws Exception {
-        when(conn.prepareStatement(anyString())).thenReturn(ps);
-        when(ps.executeQuery()).thenReturn(rs);
+        db_default_mock();
         when(rs.next()).thenReturn(true, true, false);
         when(rs.getObject(1)).thenReturn(24, 6);
         when(rs.getObject(2)).thenReturn("Bob Lee", "Jane Doe");
@@ -86,7 +124,7 @@ public class test_Services {
         when(rs.getObject(5)).thenReturn(100, 12.99);
         when(rs.getObject(6)).thenReturn("Workshop registration fee", "Misc reimbursement");
  
-        List<List<Object>> results = Services.getExpensesFromID(conn, 1);
+        List<List<Object>> results = Services.getExpensesFromID(conn, 1, 1);
  
         assertEquals(2, results.size());
         assertEquals(List.of(24, "Bob Lee", "2026-10-27", "Training", 100, "Workshop registration fee"), results.get(0));
@@ -103,12 +141,11 @@ public class test_Services {
     //are the correct ones
     @Test
     void test_get_expenses_option_2_orders_by_amount_works() throws Exception {
-        when(conn.prepareStatement(anyString())).thenReturn(ps);
-        when(ps.executeQuery()).thenReturn(rs);
+        db_default_mock();
         when(rs.next()).thenReturn(true, true, true, true, false);
         when(rs.getObject(anyInt())).thenReturn("x");
  
-        List<List<Object>> results = Services.getExpensesFromID(conn, 2);
+        List<List<Object>> results = Services.getExpensesFromID(conn, 2, 1);
  
         assertEquals(4, results.size());
         assertEquals(6, results.get(0).size());
@@ -116,44 +153,19 @@ public class test_Services {
         ArgumentCaptor<String> sql = ArgumentCaptor.forClass(String.class);
         verify(conn).prepareStatement(sql.capture());
         assertTrue(sql.getValue().contains("ORDER BY ex.amount"));
-
     }
 
     @Test
-    void test_role_required_matching_role_works() {
-        assertDoesNotThrow(() -> Services.role_required("manager", "manager"));
-    }
+    void test_manager_get_expenses_on_db_error() throws Exception{
+        Connection conn = mock(Connection.class);
+        when(conn.prepareStatement(anyString())).thenThrow(new SQLException("boom"));
 
-    @Test
-    void test_get_role_works_manager() throws Exception {
-        when(conn.prepareStatement(anyString())).thenReturn(ps);
-        when(ps.executeQuery()).thenReturn(rs);
-        when(rs.next()).thenReturn(true);
-        when(rs.getString("role")).thenReturn("manager");
- 
-        String role = Services.getRole(conn, 1);
- 
-        assertEquals("manager", role);
-        verify(ps).setInt(1, 1);
-    }
-
-    @Test
-    void test_get_role_works_employee() throws Exception {
-        when(conn.prepareStatement(anyString())).thenReturn(ps);
-        when(ps.executeQuery()).thenReturn(rs);
-        when(rs.next()).thenReturn(true);
-        when(rs.getString("role")).thenReturn("employee");
- 
-        String role = Services.getRole(conn, 3);
- 
-        assertEquals("employee", role);
-        verify(ps).setInt(1, 3);
+        assertThrows(DatabaseException.class, () -> Services.getExpensesFromID(conn, 1, 1));
     }
 
     @Test
     void test_get_category_works() throws Exception {
-        when(conn.prepareStatement(anyString())).thenReturn(ps);
-        when(ps.executeQuery()).thenReturn(rs);
+        db_default_mock();
         when(rs.next()).thenReturn(true);
         when(rs.getString("name")).thenReturn("Travel");
  
@@ -165,8 +177,7 @@ public class test_Services {
  
     @Test
     void test_is_pending_report_pending_works() throws Exception {
-        when(conn.prepareStatement(anyString())).thenReturn(ps);
-        when(ps.executeQuery()).thenReturn(rs);
+        db_default_mock();
         when(rs.next()).thenReturn(true);
         when(rs.getString("status")).thenReturn("pending");
  
@@ -178,8 +189,7 @@ public class test_Services {
  
     @Test
     void test_is_pending_report_already_approved_works() throws Exception {
-        when(conn.prepareStatement(anyString())).thenReturn(ps);
-        when(ps.executeQuery()).thenReturn(rs);
+        db_default_mock();
         when(rs.next()).thenReturn(true);
         when(rs.getString("status")).thenReturn("approved");
  
@@ -190,8 +200,7 @@ public class test_Services {
 
     @Test
     void test_is_pending_report_already_denied_works() throws Exception {
-        when(conn.prepareStatement(anyString())).thenReturn(ps);
-        when(ps.executeQuery()).thenReturn(rs);
+        db_default_mock();
         when(rs.next()).thenReturn(true);
         when(rs.getString("status")).thenReturn("denied");
  
@@ -202,8 +211,7 @@ public class test_Services {
  
     @Test
     void test_is_pending_report_not_found_works() throws Exception {
-        when(conn.prepareStatement(anyString())).thenReturn(ps);
-        when(ps.executeQuery()).thenReturn(rs);
+        db_default_mock();
         when(rs.next()).thenReturn(false);
  
         String message = Services.isPendingReport(conn, 5);
@@ -242,15 +250,14 @@ public class test_Services {
  
     @Test
     void test_get_employee_report_works() throws Exception {
-        when(conn.prepareStatement(anyString())).thenReturn(ps);
-        when(ps.executeQuery()).thenReturn(rs);
+        db_default_mock();
         when(rs.next()).thenReturn(true, false);
         when(rs.getObject(1)).thenReturn("John Doe");
         when(rs.getObject(2)).thenReturn(3);
         when(rs.getObject(3)).thenReturn(250.75);
         when(rs.getObject(4)).thenReturn(2);
  
-        List<List<Object>> report = Services.getEmployeeReport(conn);
+        List<List<Object>> report = Services.getEmployeeReport(conn, 1);
  
         assertEquals(1, report.size());
         assertEquals(List.of("John Doe", 3, 250.75, 2), report.get(0));
@@ -258,15 +265,14 @@ public class test_Services {
  
     @Test
     void test_get_category_report_works() throws Exception {
-        when(conn.prepareStatement(anyString())).thenReturn(ps);
-        when(ps.executeQuery()).thenReturn(rs);
+        db_default_mock();
         when(rs.next()).thenReturn(true, false);
         when(rs.getObject(1)).thenReturn("Travel");
         when(rs.getObject(2)).thenReturn(4);
         when(rs.getObject(3)).thenReturn(500.00);
         when(rs.getObject(4)).thenReturn(3);
  
-        List<List<Object>> report = Services.getCategoryReport(conn);
+        List<List<Object>> report = Services.getCategoryReport(conn, 1);
  
         assertEquals(1, report.size());
         assertEquals(List.of("Travel", 4, 500.00, 3), report.get(0));

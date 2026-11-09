@@ -52,6 +52,16 @@ public class Services {
         return user;
     }
 
+    private static boolean authorized(Connection conn, int user){
+        try{
+            role_required(getRole(conn, user), "manager");
+            return true;
+        } catch(AuthorizationException e){
+            System.out.println(e.getMessage());
+            return false;
+        }
+    }
+
     public static String getNameFromID(Connection conn, int id){
         String sql = "SELECT full_name FROM users WHERE id = ?;";
         String name = "";
@@ -68,7 +78,8 @@ public class Services {
         return name;
     }
 
-    public static List<List<Object>> getExpensesFromID(Connection conn, int option){
+    public static List<List<Object>> getExpensesFromID(Connection conn, int option, int user){
+        if(!authorized(conn, user)) throw new AuthorizationException("This user is not allowed to use this function");
         List<List<Object>> results = new ArrayList<>();
         String sql = "";
         if(option == 1){
@@ -109,14 +120,14 @@ public class Services {
     }
 
 
-    public static void role_required(String role, String expected_role){
+    private static void role_required(String role, String expected_role){
         if(!role.equals(expected_role)){
             //If the user is not a manager
             throw new AuthorizationException("This account does not have access to this app.");
         }
     }
 
-    public static String getRole(Connection conn, int id){
+    private static String getRole(Connection conn, int id){
         String role = "";
         String sql = """
                     SELECT role
@@ -183,6 +194,7 @@ public class Services {
 
     //Adding approval with comment
     public static int updateApproval(Connection conn, String status, int reviewer_id, String comment, String review_date, int expense_id){
+        if(!authorized(conn, reviewer_id)) throw new AuthorizationException("This user is not allowed to use this function");
         String sql = """
                     UPDATE approvals
                     SET status = ?, reviewer_id = ?, comment = ?, review_date = ?
@@ -201,6 +213,7 @@ public class Services {
     }
     //Adding approval without comment
     public static int updateApproval(Connection conn, String status, int reviewer_id, String review_date, int expense_id){
+        if(!authorized(conn, reviewer_id)) throw new AuthorizationException("This user is not allowed to use this function");
         String sql = """
                     UPDATE approvals
                     SET status = ?, reviewer_id = ?, review_date = ?
@@ -217,7 +230,8 @@ public class Services {
         }
     }
 
-    public static List<List<Object>> getEmployeeReport(Connection conn){
+    public static List<List<Object>> getEmployeeReport(Connection conn, int user){
+        if(!authorized(conn, user)) throw new AuthorizationException("This user is not allowed to use this function");
         List<List<Object>> results = new ArrayList<>();
         String sql = """
             SELECT u.full_name as name, COUNT(*) as totalReports, SUM(ex.amount) as totalAmount, SUM(CASE WHEN a.status = 'approved' THEN 1 ELSE 0 END) as totalApproved
@@ -243,7 +257,8 @@ public class Services {
             throw new DatabaseException("DB Error attempting to get employee report");
         }
     }
-    public static List<List<Object>> getCategoryReport(Connection conn){
+    public static List<List<Object>> getCategoryReport(Connection conn, int user){
+        if(!authorized(conn, user)) throw new AuthorizationException("This user is not allowed to use this function");
         List<List<Object>> results = new ArrayList<>();
             String sql = """
             SELECT c.name as name, COUNT(*) as totalReports, SUM(ex.amount) as totalAmount, SUM(CASE WHEN a.status = 'approved' THEN 1 ELSE 0 END) as totalApproved
