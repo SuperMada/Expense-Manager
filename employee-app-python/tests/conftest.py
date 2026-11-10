@@ -18,3 +18,10 @@ def temp_db(tmp_path):
     conn.executescript(SEED_PATH.read_text())
     yield conn
     conn.close()
+
+@pytest.fixture
+def emp_jane(temp_db):
+    """emp_jane user row from seeded DB."""
+    return temp_db.execute(
+        "SELECT id, username, role, full_name FROM users WHERE username='emp_jane'"
+    ).fetchone()
