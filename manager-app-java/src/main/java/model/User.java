@@ -1,5 +1,3 @@
 package model;
 
-public class User {
-    
-}
+public record User(int id, String username, String role, String fullName) {}

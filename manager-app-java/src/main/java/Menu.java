@@ -1,305 +1,183 @@
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.time.LocalDate;
 import java.util.List;
 import java.util.Scanner;
 
 import exceptions.AuthenticationException;
 import exceptions.AuthorizationException;
-import exceptions.DatabaseException;
-import validation.Validators;
-
+import exceptions.ExpenseManagerException;
+import exceptions.ValidationException;
+import model.PendingExpense;
+import model.ReportRow;
+import model.User;
+import service.ApprovalService;
+import service.ReportService;
+import service.AuthorizationService;
+import validation.InputValidator;
 
 public class Menu {
-    static int TOTAL_LOGIN_ATTEMPTS = 3;
+    private static final int MAX_LOGIN_ATTEMPTS = 3;
 
-    private static String loginUsername(Scanner in){
-        String username = "";
-        while(username.equals("")){
-            System.out.print("Please Enter Your Username: ");
-            username = in.nextLine().strip();
-            System.out.println();
-        }
-        return username;
+    private final AuthorizationService auth;
+    private final ApprovalService approvals;
+    private final ReportService reports;
+    private final Scanner in;
+
+    public Menu(AuthorizationService auth, ApprovalService approvals,
+                ReportService reports, Scanner in) {
+        this.auth = auth;
+        this.approvals = approvals;
+        this.reports = reports;
+        this.in = in;
     }
 
-    private static String loginPassword(Scanner in){
-        String password = "";
-        while(password.equals("")){
-            System.out.print("Please Enter Your Password: ");
-            password = in.nextLine().strip();
-            System.out.println();
+    /** Runs the whole session and returns the process exit code. */
+    public int run() {
+        User user;
+        try {
+            user = login();
+        } catch (AuthorizationException e) {       // FR-A2: wrong role
+            System.out.println(e.getMessage());
+            return 0;
         }
-        return password;
-    }
-
-    private static String charInput(Scanner in, String question, String option1, String option2){
-        String input = "";
-        while(true){
-            System.out.println(question);
-            input = in.nextLine().strip();
-            System.out.println();
-            if(input.equals(option1) || input.equals(option2)){
-                break;
-            } else System.out.printf("Please enter a valid selection %s/%s\n", option1, option2);
-        }
-        return input;
-    }
-
-    private static int integerInput(Scanner in, String question){
-        while(true){
-            System.out.println(question);
-            String input = in.nextLine().strip();
-            System.out.println();
-            try{
-                return Integer.parseInt(input);
-            } catch(NumberFormatException e){
-                System.out.println("Please enter an integer.\n");
-            }
-        }
-    }
-
-    // public static String stringInput(Scanner in, String question){
-        
-    // }
-
-    public static int loginMenu(Connection conn, Scanner in){
-        String username = "";
-        String password = "";
-        int login_attempts = 0;
-        int user = 0;
-        
-        while(login_attempts < TOTAL_LOGIN_ATTEMPTS){
-            username = "";
-            password = "";
-            //When the input is blank we don't want to use a login attempt
-            //Question: Does an empty input include just spaces i.e. do we need to strip the input
-            //I believe we need to strip afterwords but do we do it before
-            username = loginUsername(in);
-            password = loginPassword(in);
-            try{
-                user = Services.login(conn, username, password);
-                break;
-            } catch(AuthenticationException e){
-                //Bad username + password
-                login_attempts++;
-                System.out.println(e.getMessage());
-                continue;
-            } catch(AuthorizationException e){
-                //User not manager
-                System.out.println(e.getMessage());
-                System.exit(0);
-            } catch(DatabaseException e){
-                System.out.println(e.getMessage());
-            }
-        }
-        if(login_attempts == TOTAL_LOGIN_ATTEMPTS){
+        if (user == null) {                        // FR-A3
             System.out.println("Too many failed attempts.");
-            System.exit(1);
+            return 1;
         }
-        return user;
+        System.out.printf("Welcome, %s\n\n", user.fullName());
+        mainLoop(user);
+        return 0;
     }
 
-    public static void managerMenu(Connection conn, Scanner in, int user)
-        throws SQLException{
-        String name = Services.getNameFromID(conn, user);
-        int option = -1;
-        String input;
-        while(true){
-            option = -1;
-            System.out.printf("Welcome, %s,\n", name);
+    // ---------- login ----------
+
+    /** Returns the user, or null after too many failed attempts. */
+    private User login() {
+        for (int attempt = 0; attempt < MAX_LOGIN_ATTEMPTS; attempt++) {
+            String username = promptNonEmpty("Please Enter Your Username: ");
+            String password = promptNonEmpty("Please Enter Your Password: ");
+            try {
+                return auth.login(username, password);
+            } catch (AuthenticationException e) {
+                System.out.println(e.getMessage() + "\n");   // counts as a failed attempt
+            }
+        }
+        return null;
+    }
+
+    // ---------- main menu ----------
+
+    private void mainLoop(User user) {
+        while (true) {
             System.out.println("Please Kindly Select an Option...\n");
             System.out.println("1: List Pending Expenses");
             System.out.println("2: Review An Expense");
             System.out.println("3: Reports");
             System.out.println("0: Exit");
-            input = in.nextLine();
+            String input = in.nextLine().strip();
             System.out.println();
-            try{
-                option = Integer.parseInt(input);
-            } catch(NumberFormatException e){
-                System.out.println("Please enter a valid option.\n");
-                continue;
-            }
-            if(option == 0){
-                System.out.println("Shutting Down...");
-                System.exit(0);
-            } else if(option == 1){
-                //Call pending expenses
-                listExpenses(conn, in, user);
-            } else if(option == 2){
-                //Call Rewview expenses
-                reviewExpenses(conn, in, user);
-            } else if(option == 3){
-                //Call reports
-                viewReports(conn, in, user);
-            } else{
-                System.out.println("Please enter a valid option.\n");
-                continue;
+
+            try {
+                switch (input) {
+                    case "0" -> { System.out.println("Shutting Down..."); return; }
+                    case "1" -> listPending(user);
+                    case "2" -> review(user);
+                    case "3" -> reportsMenu(user);
+                    default  -> System.out.println("Please enter a valid option.\n");
+                }
+            } catch (ExpenseManagerException e) {  // expected errors: short message, no stack trace
+                System.out.println(e.getMessage() + "\n");
             }
         }
     }
 
-    private static void viewReports(Connection conn, Scanner in, int user){
-        String sort = "";
-        int sort_id = -1;
-        sort = charInput(in, "Would you like to create report on Employee('e') or Category('c'): ", "e", "c");
-        if(sort.equals("e")){
-            //Call the employee report
-            try{
-                List<List<Object>> data = Services.getEmployeeReport(conn, user);
-                if(data.isEmpty()){
-                    System.out.println("No pending expenses.\n");
-                } else{
-                    for(List<Object> row : data){
-                        System.out.printf("Employee Name: %s, Total Reports: %d, Total Amount: $%.2f, Total Approved: %d\n", row.get(0), row.get(1), row.get(2), row.get(3));
-                    }
-                    System.out.println("\n\nPress ENTER to return to main menu");
-                    in.nextLine();
-                }
+    // ---------- 1: list pending ----------
 
-            } catch(DatabaseException e){
-                System.out.println(e.getMessage());
-            }
-
-        } else{
-            //Call the category report
-            try{
-                List<List<Object>> data = Services.getCategoryReport(conn, user);
-                if(data.isEmpty()){
-                    System.out.println("No pending expenses.\n");
-                } else{
-                    for(List<Object> row : data){
-                        System.out.printf("Category Name: %s, Total Reports: %d, Total Amount: $%.2f, Total Approved: %d\n", row.get(0), row.get(1), row.get(2), row.get(3));
-                    }
-                    System.out.println("\n\nPress ENTER to return to main menu");
-                    in.nextLine();
-                }
-
-            } catch(DatabaseException e){
-                System.out.println(e.getMessage());
-            }
-        }
-    }
-
-    private static void reviewExpenses(Connection conn, Scanner in, int user)
-        throws SQLException{
-        int expense_id = -1;
-        String status = "";
-        int reviewer_id = user;
-        String comment = "";
-        String date = LocalDate.now().toString();
-
-        //Need to take an expense id input first and check that it exists and is still pending before moving forward
-        while(expense_id < 0){
-            int option = integerInput(in, "Please enter the ID of the expense you wish to review: ");
-            if(option>=0){
-                //See if the id exists and is pending
-                String report = Services.isPendingReport(conn, option);
-                System.out.println(report);
-                if(report.equals("Report Pending Approval Found\n")){
-                    //Ask inputs
-                    //Add to db
-                    expense_id = option;
-                    //Update status on a or d
-                    status = charInput(in, "Please Select Approve('a') or Deny('d')", "a", "d");
-                    if(status.equals("a")){
-                        String comment_status = "";
-                        while(true){
-                            System.out.println("Would you like to add a comment? (y/n)");
-                            comment_status = in.nextLine();
-                            System.out.println();
-                            if(comment_status.equals("y")){
-                                boolean comment_valid = false;
-                                while(!comment_valid){
-                                    System.out.println("Please enter your comment: ");
-                                    String comment_input = in.nextLine();
-                                    System.out.println();
-
-                                    comment_valid = Validators.approvalComment(comment_input);
-                                    //If the approval comment is empty should we place the empty string in the db of should be keep it null
-                                    if(comment_valid){
-                                        comment = comment_input;
-                                    } else{
-                                        System.out.println("That is not a valid comment, please input a valid approved comment");
-                                    }
-                                }   
-                                int success = Services.updateApproval(conn, status, reviewer_id, comment, date, expense_id);
-                                if(success == 1){
-                                    System.out.println("Successfully updated the expense report");
-                                } else{
-                                    System.out.println("Unexpected error, please try again");
-                                }
-                                break;
-                            } else if(comment_status.equals("n")){
-                                int success = Services.updateApproval(conn, status, reviewer_id, date, expense_id);
-                                if(success == 1){
-                                    System.out.println("Successfully updated the expense report");
-                                } else{
-                                    System.out.println("Unexpected error, please try again");
-                                }
-                                break;
-                            } else{
-                                System.out.println("Please enter either y or n\n");
-                            }
-                        }
-                    } else if(status.equals("d")){
-                        boolean comment_valid = false;
-                        while(!comment_valid){
-                            System.out.println("Please enter your comment: ");
-                            String comment_input = in.nextLine();
-                            System.out.println();
-
-                            comment_valid = Validators.denialComment(comment_input);
-                            //If the approval comment is empty should we place the empty string in the db of should be keep it null
-                            if(comment_valid){
-                                comment = comment_input;
-                            } else{
-                                System.out.println("That is not a valid comment, please input a valid approved comment");
-                            }
-                        }  
-                        int success = Services.updateApproval(conn, status, reviewer_id, comment, date, expense_id);
-                        if(success == 1){
-                            System.out.println("Successfully updated the expense report");
-                        } else{
-                            System.out.println("Unexpected error, please try again");
-                        }
-                    }
-                }
-            } else{
-                System.out.println("Please enter a valid pending expense ID\n");
-                continue;
-            }
-        }
-    }
-
-    private static void listExpenses(Connection conn, Scanner in, int user)
-        throws SQLException{
-        int option = 0;
-        while(true){
-            System.out.println("1: Sort by Date\n2: Sort by Amount");
-            String input = in.nextLine();
-            try{
-                option = Integer.parseInt(input);
-            } catch(NumberFormatException e){
-                System.out.println("Please enter a valid option.\n");
-                continue;
-            }
-            if(option != 1 && option != 2){
-                System.out.println("Please enter a valid option.\n");
-                continue;
-            }
-            break;
-        }
-        List<List<Object>> data = Services.getExpensesFromID(conn, option, user);
-        if(data.isEmpty()){
+    private void listPending(User user) {
+        List<PendingExpense> expenses = approvals.listPendingByDate(user);
+        if (expenses.isEmpty()) {
             System.out.println("No pending expenses.\n");
-        } else{
-            for(List<Object> row : data){
-            System.out.printf("Expense ID: %d, Employee Name: %s, Date: %s, Category: %s, Amount: $%.2f, Description: %s\n", row.get(0), row.get(1), row.get(2), row.get(3), row.get(4), row.get(5));
-            }
-            System.out.println("\n\nPress ENTER to return to main menu");
-            in.nextLine();
+            return;
         }
+        for (PendingExpense e : expenses) {
+            System.out.printf(
+                "Expense ID: %d, Employee Name: %s, Date: %s, Category: %s, Amount: $%.2f, Description: %s\n",
+                e.id(), e.fullName(), e.date(), e.category(), e.amount(), e.description());
+        }
+        waitForEnter();
+    }
+
+    // ---------- 2: review ----------
+
+    private void review(User user) {
+        String idText = prompt("Please enter the ID of the expense you wish to review: ");
+        if (!InputValidator.isValidExpenseId(idText)) {            // VR-08
+            System.out.println("Please enter a valid expense ID (a positive whole number).\n");
+            return;
+        }
+        int id = Integer.parseInt(idText);
+
+        approvals.requirePending(user, id);   // throws NotFound / InvalidState -> printed by mainLoop
+
+        boolean approve = charInput("Please Select Approve('a') or Deny('d')", "a", "d").equals("a");
+        boolean wantsComment = !approve
+                || charInput("Would you like to add a comment? (y/n)", "y", "n").equals("y");
+
+        while (true) {
+            String comment = wantsComment ? prompt("Please enter your comment: ") : null;
+            try {
+                if (approve) approvals.approve(user, id, comment);
+                else         approvals.deny(user, id, comment);
+                System.out.println("Successfully updated the expense report\n");
+                return;
+            } catch (ValidationException e) {   // VR-05 / VR-06: re-ask for the comment only
+                System.out.println(e.getMessage() + "\n");
+            }
+        }
+    }
+
+    // ---------- 3: reports ----------
+
+    private void reportsMenu(User user) {
+        boolean byEmployee = charInput(
+            "Would you like to create report on Employee('e') or Category('c'): ", "e", "c").equals("e");
+
+        List<ReportRow> rows = byEmployee ? reports.byEmployee(user) : reports.byCategory(user);
+        if (rows.isEmpty()) {
+            System.out.println("No data for the selected criteria.\n");
+            return;
+        }
+        String label = byEmployee ? "Employee Name" : "Category Name";
+        for (ReportRow r : rows) {
+            System.out.printf("%s: %s, Total Reports: %d, Total Amount: $%.2f, Total Approved: %d\n",
+                label, r.name(), r.count(), r.total(), r.approvedCount());
+        }
+        waitForEnter();
+    }
+
+    // ---------- input helpers (the only place Scanner is read) ----------
+
+    private String prompt(String question) {
+        System.out.print(question);
+        String input = in.nextLine().strip();
+        System.out.println();
+        return input;
+    }
+
+    private String promptNonEmpty(String question) {       // empty input re-prompts, no attempt used
+        String input = "";
+        while (input.isEmpty()) input = prompt(question);
+        return input;
+    }
+
+    private String charInput(String question, String opt1, String opt2) {
+        while (true) {
+            String input = prompt(question + " ");
+            if (input.equals(opt1) || input.equals(opt2)) return input;
+            System.out.printf("Please enter a valid selection %s/%s\n", opt1, opt2);
+        }
+    }
+
+    private void waitForEnter() {
+        System.out.println("\nPress ENTER to return to main menu");
+        in.nextLine();
     }
 }

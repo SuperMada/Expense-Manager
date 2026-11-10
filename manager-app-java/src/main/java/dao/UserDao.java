@@ -7,6 +7,8 @@ import java.sql.SQLException;
 
 import exceptions.DatabaseException;
 
+import model.User;
+
 public class UserDao {
     private final Connection conn;
 
@@ -25,9 +27,9 @@ public class UserDao {
                 } else {
                     return null;
                 }
-            } catch(SQLException e) {
-                throw new DatabaseException("DB Error attempting to login");
-            }
+            } 
+        } catch(SQLException e){
+            throw new DatabaseException("DB Error attempting to login");
         }
     }
 
@@ -41,10 +43,10 @@ public class UserDao {
                 } else {
                     return null;
                 }
-            } catch(SQLException e) {
+            }
+        } catch(SQLException e){
                 throw new DatabaseException("DB Error attempting to get user with id");
             }
-        }
     }
 
     private User map(ResultSet rs) throws SQLException {
