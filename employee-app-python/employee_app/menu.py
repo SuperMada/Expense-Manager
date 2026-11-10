@@ -29,11 +29,13 @@ MENU_VIEW_EXPENSES = """
 def _read_input(prompt: str, mask=False):
     while True:
         if mask:
-            value = getpass.getpass(prompt).strip()
+            value = getpass.getpass(prompt)
         else:
-            value = input(prompt).strip()
-        if value:
-            return value
+            value = input(prompt)
+        try:
+            return validators.validate_login_input(value)
+        except ValidationError:
+            pass
 
 def _prompt_until_valid(prompt: str, validate: callable, default=None):
     while True:
