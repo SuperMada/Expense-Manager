@@ -26,13 +26,4 @@ public final class InputValidator {
     public static boolean isNonEmpty(String input) {
         return input != null && !input.strip().isEmpty();
     }
-
-    /** VR-07: both dates are real YYYY-MM-DD dates and start <= end. */
-    public static boolean isValidDateRange(String start, String end) {
-        try {
-            return !LocalDate.parse(start).isAfter(LocalDate.parse(end));
-        } catch (DateTimeParseException | NullPointerException e) {
-            return false;   // LocalDate.parse is strict, so 2026-02-30 is rejected
-        }
-    }
 }

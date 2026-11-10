@@ -1,3 +1,4 @@
+import java.io.Console;
 import java.util.List;
 import java.util.Scanner;
 
@@ -53,7 +54,7 @@ public class Menu {
     private User login() {
         for (int attempt = 0; attempt < MAX_LOGIN_ATTEMPTS; attempt++) {
             String username = promptNonEmpty("Please Enter Your Username: ");
-            String password = promptNonEmpty("Please Enter Your Password: ");
+            String password = promptNonEmptyPassword("Please Enter Your Password: ");
             try {
                 return auth.login(username, password);
             } catch (AuthenticationException e) {
@@ -165,6 +166,19 @@ public class Menu {
     private String promptNonEmpty(String question) {       // empty input re-prompts, no attempt used
         String input = "";
         while (input.isEmpty()) input = prompt(question);
+        return input;
+    }
+
+    private String promptPassword(String question){
+        Console console = System.console();
+        char[] password = console.readPassword(question);
+        System.out.println();
+        return new String(password);
+    }
+
+    private String promptNonEmptyPassword(String question){
+        String input = "";
+        while (input.isEmpty()) input = promptPassword(question);
         return input;
     }
 
