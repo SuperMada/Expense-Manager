@@ -1,5 +1,7 @@
+import os
 import sqlite3 as sql
 from pathlib import Path
+from unittest.mock import patch
 
 import pytest
 
@@ -25,3 +27,20 @@ def emp_jane(temp_db):
     return temp_db.execute(
         "SELECT id, username, role, full_name FROM users WHERE username='emp_jane'"
     ).fetchone()
+
+@pytest.fixture
+def menu_environment(tmp_path):
+    """
+    Temp DB file with schema and seed data. EM_DB_PATH set to it.
+    Used by menu-flow tests where menu functions open their own connections to the database.
+    """
+    db_path = tmp_path / "menu_temp.db"
+    conn = sql.connect(db_path)
+    conn.row_factory = sql.Row
+    conn.execute("PRAGMA foreign_keys = ON")
+    conn.executescript(SCHEMA_PATH.read_text())
+    conn.executescript(SEED_PATH.read_text())
+    conn.commit()
+    conn.close()
+    with patch.dict(os.environ, {"EM_DB_PATH": str(db_path)}):
+        yield db_path
