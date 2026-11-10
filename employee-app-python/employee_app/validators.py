@@ -1,12 +1,21 @@
 from datetime import date, timedelta
 from employee_app.exceptions import ValidationError
 
+LOGIN_MSG = "Input cannot be empty."
 AMOUNT_MSG = "Amount must be greater than 0, at most 10000.00, with at most 2 decimals."
 DESC_MSG = "Description must be 1-200 characters (including spaces)."
 CATEGORY_MSG = "Category must be 1-6."
 DATE_MSG = "Date must be YYYY-MM-DD, not in the future, and within the last 90 days."
 EXPENSE_ID_MSG = "Expense ID must be a positive whole number."
 MENU_CHOICE_MSG = "Invalid menu choice. Menu choice must be 0-6."
+
+
+def validate_login_input(raw: str):
+    """FR-A1: Empty input re-prompts. Returns trimmed non-empty string."""
+    s = (raw or "").strip()
+    if not s:
+        raise ValidationError(LOGIN_MSG)
+    return s
 
 
 def validate_amount(raw:str):
@@ -148,7 +157,7 @@ def validate_menu_choice(raw:str):
         ValidationError: If the menu choice is invalid.
     """
     raw = raw.strip()
-    if raw not in ["0", "1", "2", "3", "4", "5", "6"]:
+    if raw not in ["0", "1", "2", "3", "4", "5"]:
         raise ValidationError(MENU_CHOICE_MSG)
 
     return int(raw)
