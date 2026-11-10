@@ -19,7 +19,7 @@ def test_edit_other_user_expense(temp_db, emp_jane):
 @pytest.mark.integration
 @pytest.mark.negative
 def test_delete_other_user_expense(temp_db, emp_jane):
-    """Covers: FR-A4, FR-E3, PTC-08"""
+    """Covers: FR-A4, FR-E4, PTC-08"""
     with pytest.raises(AuthorizationError):
         services.delete_expense(temp_db, emp_jane, 10)
 
@@ -127,7 +127,7 @@ def test_review_history(temp_db, emp_jane):
     # check id 7 has no comment and from gabe newell
     for r in rows:
         if r["id"] == 7:
-            assert r["comment"] == None
+            assert r["comment"] is None
             assert r["reviewer"] == "Gabe Newell"
 
 
