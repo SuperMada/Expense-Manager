@@ -6,11 +6,14 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Logger;
 
 import exceptions.DatabaseException;
+import logging.AppLogger;
 import model.ReportRow;
 
 public class ReportDao {
+    private static final Logger log = AppLogger.get(ReportDao.class);   
     private final Connection conn;
 
     public ReportDao(Connection conn){
@@ -36,8 +39,10 @@ public class ReportDao {
                     rs.getDouble("totalAmount"),
                     rs.getInt("totalApproved")));
             }
+            log.info("Report on employees successful");
             return rows;
         } catch(SQLException e){
+            log.severe("DB error while attempting to create report on employees");
             throw new DatabaseException("DB Error attempting to get report");
         }
     }
@@ -61,8 +66,10 @@ public class ReportDao {
                     rs.getDouble("totalAmount"),
                     rs.getInt("totalApproved")));
             }
+            log.info("Report on category successful");
             return rows;
         } catch(SQLException e){
+            log.severe("DB error while attempting to create report on category");
             throw new DatabaseException("DB Error attempting to get report");
         }
     }

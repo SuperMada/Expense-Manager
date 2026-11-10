@@ -5,10 +5,13 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDate;
+import java.util.logging.Logger;
 
 import exceptions.DatabaseException;
+import logging.AppLogger;
 
 public class ApprovalDao {
+    private static final Logger log = AppLogger.get(ApprovalDao.class);
     private final Connection conn;
 
     public ApprovalDao(Connection conn){ 
@@ -21,13 +24,17 @@ public class ApprovalDao {
         try(PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, expenseId);
             try(ResultSet rs = ps.executeQuery()) {
-                if(rs.next()) 
+                if(rs.next()){
+                    log.info("Got status: " + rs.getString("status") + " from id: " + expenseId);
                     return rs.getString("status");
+                }
                 else{
+                    log.warning("Failed to find expense with id: " + expenseId);
                     return null;
                 }
             }
         } catch(SQLException e) {
+            log.severe("DB error attempting to find status for id: " + expenseId);
             throw new DatabaseException("DB Error attempting to read approval status");
         }
     }
@@ -48,7 +55,9 @@ public class ApprovalDao {
             ps.setInt(5, expenseId);
             ps.executeUpdate();
         } catch(SQLException e) {
+            log.severe("DB error attempting to update expense: " + expenseId);
             throw new DatabaseException("DB Error attempting to update approval");
         }
+        log.info("Expense with id: " + expenseId + " updated with status: " + status);
     }
 }

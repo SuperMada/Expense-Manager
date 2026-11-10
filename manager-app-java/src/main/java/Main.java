@@ -1,11 +1,14 @@
 import java.io.IOException;
+import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.time.Clock;
 import java.util.Scanner;
+import java.util.logging.Logger;
 
 import dao.*;
 import exceptions.ExpenseManagerException;
+import logging.AppLogger;
 import service.*;
 
 public class Main {
@@ -15,6 +18,14 @@ public class Main {
     }
 
     private static int run() {
+        try {
+            AppLogger.init(Path.of("logs", "manager_app.log"));
+        } catch (IOException e) {
+            System.out.println("Could not start logging.");
+        }
+        Logger log = AppLogger.get(Main.class);
+        log.info("Manager app starting");
+
         try (Scanner in = new Scanner(System.in);
             Connection conn = db.Database.init()) {
 

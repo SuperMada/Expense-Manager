@@ -30,11 +30,6 @@ public class ApprovalService {
         return expenseDao.getExpenseSortDate();
     }
 
-    public List<PendingExpense> listPendingByAmount(User actor){
-        AuthorizationService.authorized(actor.role(), "manager");
-        return expenseDao.getExpenseSortAmount();
-    }
-
     /** Used by the menu before it asks for a comment. Throws if the expense can't be decided. */
     public void requirePending(User actor, int expenseId) {
         AuthorizationService.authorized(actor.role(), "manager");

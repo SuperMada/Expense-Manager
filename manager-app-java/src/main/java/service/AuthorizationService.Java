@@ -21,7 +21,7 @@ public class AuthorizationService{
     public User login(String username, String password){
         User user = userDao.findByLogin(username, password);
         if(user == null) throw new AuthenticationException("Invalid username or password");
-        if(!user.role().equals("manager")) throw new AuthorizationException("This account does not have access to this app");
+        authorized(user.role(), "manager");
         return user;
     }
 }
