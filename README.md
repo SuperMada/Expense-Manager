@@ -69,3 +69,18 @@ python -m employee_app.main
 cd manager-app-java
 mvn -q compile exec:java
 ```
+
+## Running Tests
+
+### Python Employee App Tests
+
+```bash
+cd employee-app-python
+```
+
+For pytest:
+
+```bash
+pytest                      # For running all tests
+pytest -c pytest-report.ini # For pytest + HTML reports
+```
