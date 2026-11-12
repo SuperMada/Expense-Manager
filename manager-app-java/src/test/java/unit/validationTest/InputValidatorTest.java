@@ -7,14 +7,12 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvFileSource;
-import org.junit.jupiter.params.provider.CsvSource;
 
 import validation.InputValidator;
 
 public class InputValidatorTest {
-    @ParameterizedTest 
-    @CsvSource({"0,false", "-1,false", "1.5,false", "abc,false", "1,true", "500,true"})
-    @Tag("Boundary")
+    
+    //Test called through the shared resource
     void test_valid_expense_id(String input, boolean expected){
         assertEquals(InputValidator.isValidExpenseId(input), expected);
     }
@@ -25,9 +23,7 @@ public class InputValidatorTest {
         assertFalse(InputValidator.isValidExpenseId(null));
     }
 
-    @ParameterizedTest 
-    @CsvSource({"0,true", "1,true", "abc,false", "3,true", "4,false"})
-    @Tag("Boundary")
+    //Test called through the shared resource
     void test_valid_menu_choice(String input, boolean expected){
         assertEquals(InputValidator.isValidMenuChoice(input, 3), expected);
     }
@@ -38,10 +34,21 @@ public class InputValidatorTest {
         assertFalse(InputValidator.isValidMenuChoice(null, 3));
     }
 
-    @ParameterizedTest 
-    @CsvFileSource(resources="/validation_cases.csv", numLinesToSkip = 16)
-    @Tag("Boundary")
-    void test_not_empty(String field, String input, boolean expected){
+    //Test called through the shared resource
+    void test_not_empty(String input, boolean expected){
         assertEquals(InputValidator.isNonEmpty(input), expected);
+    }
+
+    @ParameterizedTest 
+    @CsvFileSource(resources="/validation_cases.csv", numLinesToSkip = 1)
+    void test_shared_data(String field, String input, boolean expected){
+        if(field.equals("expense_id")){
+            test_valid_expense_id(input, expected);
+        } else if(field.equals("menu_choice")){
+            test_valid_menu_choice(input, expected);
+        } else if(field.equals("login_input")){
+            test_not_empty(input, expected);
+        }
+
     }
 }
