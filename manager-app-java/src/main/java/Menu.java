@@ -22,39 +22,36 @@ public class Menu {
     private final ReportService reports;
     private final Scanner in;
 
-    public Menu(AuthorizationService auth, ApprovalService approvals,
-                ReportService reports, Scanner in) {
+    public Menu(AuthorizationService auth, ApprovalService approvals, ReportService reports, Scanner in) {
         this.auth = auth;
         this.approvals = approvals;
         this.reports = reports;
         this.in = in;
     }
 
-    /** Runs the whole session and returns the process exit code. */
+    //Runs session, hands of prints to helpers
     public int run() {
         User user;
         try {
             user = login();
-        } catch (AuthorizationException e) {       // FR-A2: wrong role
+        } catch (AuthorizationException e) {
             System.out.println(e.getMessage());
             return 0;
         }
-        if (user == null) {                        // FR-A3
+        if (user == null) {
             System.out.println("Too many failed attempts.");
             return 1;
         }
-        System.out.printf("Welcome, %s\n\n", user.fullName());
+        System.out.printf("Welcome, %s.\n\n", user.fullName());
         mainLoop(user);
         return 0;
     }
 
-    // ---------- login ----------
-
-    /** Returns the user, or null after too many failed attempts. */
+    //Login
     private User login() {
         for (int attempt = 0; attempt < MAX_LOGIN_ATTEMPTS; attempt++) {
-            String username = promptNonEmpty("Please Enter Your Username: ");
-            String password = promptNonEmptyPassword("Please Enter Your Password: ");
+            String username = promptNonEmpty("Username: ");
+            String password = promptNonEmptyPassword("Password: ");
             try {
                 return auth.login(username, password);
             } catch (AuthenticationException e) {
@@ -64,15 +61,15 @@ public class Menu {
         return null;
     }
 
-    // ---------- main menu ----------
-
+    //Main menu
     private void mainLoop(User user) {
         while (true) {
-            System.out.println("Please Kindly Select an Option...\n");
-            System.out.println("1: List Pending Expenses");
-            System.out.println("2: Review An Expense");
-            System.out.println("3: Reports");
-            System.out.println("0: Exit");
+            System.out.println("----- Manager Expense Manager -----");
+            System.out.println("1. List Pending Expenses");
+            System.out.println("2. Review An Expense");
+            System.out.println("3. Reports");
+            System.out.println("0. Exit");
+            System.out.print("Select and option: ");
             String input = in.nextLine().strip();
             System.out.println();
 
@@ -90,27 +87,28 @@ public class Menu {
         }
     }
 
-    // ---------- 1: list pending ----------
-
+    //Pending
     private void listPending(User user) {
         List<PendingExpense> expenses = approvals.listPendingByDate(user);
         if (expenses.isEmpty()) {
             System.out.println("No pending expenses.\n");
             return;
         }
+        System.out.printf("%-12s | %-14s | %-10s | %-16s | %-7s |  %s\n", "Expense ID", "Employee Name", "Date", "Category", "Amount", "Description");
+        System.out.println("---------------------------------------------------------------------------------------------------");
         for (PendingExpense e : expenses) {
+
             System.out.printf(
-                "Expense ID: %d, Employee Name: %s, Date: %s, Category: %s, Amount: $%.2f, Description: %s\n",
+                "%-12d | %-14s | %-10s | %-16s | $%-7.2f | %s\n",
                 e.id(), e.fullName(), e.date(), e.category(), e.amount(), e.description());
         }
         waitForEnter();
     }
 
-    // ---------- 2: review ----------
-
+    //Accept/Deny
     private void review(User user) {
         String idText = prompt("Please enter the ID of the expense you wish to review: ");
-        if (!InputValidator.isValidExpenseId(idText)) {            // VR-08
+        if (!InputValidator.isValidExpenseId(idText)) {
             System.out.println("Please enter a valid expense ID (a positive whole number).\n");
             return;
         }
@@ -134,8 +132,7 @@ public class Menu {
         }
     }
 
-    // ---------- 3: reports ----------
-
+    //Reports
     private void reportsMenu(User user) {
         boolean byEmployee = charInput(
             "Would you like to create report on Employee('e') or Category('c'): ", "e", "c").equals("e");
@@ -146,28 +143,30 @@ public class Menu {
             return;
         }
         String label = byEmployee ? "Employee Name" : "Category Name";
+        System.out.printf("%-16s | %-14s | %-14s | %-16s\n", label, "Total Reports", "Total Amount", "Total Approved");
+        System.out.println("-----------------------------------------------------------");
         for (ReportRow r : rows) {
-            System.out.printf("%s: %s, Total Reports: %d, Total Amount: $%.2f, Total Approved: %d\n",
-                label, r.name(), r.count(), r.total(), r.approvedCount());
+            System.out.printf("%-16s | %-14d | $%-14.2f | %-16d\n",
+                r.name(), r.count(), r.total(), r.approvedCount());
         }
         waitForEnter();
     }
 
-    // ---------- input helpers (the only place Scanner is read) ----------
-
+    //Get input
     private String prompt(String question) {
         System.out.print(question);
         String input = in.nextLine().strip();
-        System.out.println();
         return input;
     }
 
-    private String promptNonEmpty(String question) {       // empty input re-prompts, no attempt used
+    //Makes sure input is not empty, reprompts if so
+    private String promptNonEmpty(String question) {
         String input = "";
         while (input.isEmpty()) input = prompt(question);
         return input;
     }
 
+    //Need to use console to hide password on input
     private String promptPassword(String question){
         Console console = System.console();
         //For tests the console is always null and I can't take in password
@@ -175,7 +174,6 @@ public class Menu {
             return prompt(question);
         }
         char[] password = console.readPassword(question);
-        System.out.println();
         return new String(password);
     }
 
@@ -185,6 +183,7 @@ public class Menu {
         return input;
     }
 
+    //We take char input for options, helper function to make sure input is one of the options
     private String charInput(String question, String opt1, String opt2) {
         while (true) {
             String input = prompt(question + " ");
@@ -193,6 +192,7 @@ public class Menu {
         }
     }
 
+    //A user defined wait as they view our outputted data
     private void waitForEnter() {
         System.out.println("\nPress ENTER to return to main menu");
         in.nextLine();

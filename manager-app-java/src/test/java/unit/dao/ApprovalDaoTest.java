@@ -10,6 +10,7 @@ import java.sql.SQLException;
 import java.time.LocalDate;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
@@ -30,6 +31,7 @@ public class ApprovalDaoTest {
 
     @Test 
     @Tag("Negative")
+    @DisplayName("Covers: FR-M2")
     void test_find_status_on_db_error() throws SQLException{
         when(conn.prepareStatement(anyString())).thenThrow(new SQLException("Auto Exception"));
 
@@ -38,6 +40,7 @@ public class ApprovalDaoTest {
 
     @Test 
     @Tag("Negative")
+    @DisplayName("Covers: FR-M2")
     void test_save_decision_on_db_error() throws SQLException{
         when(conn.prepareStatement(anyString())).thenThrow(new SQLException("Auto Exception"));
 

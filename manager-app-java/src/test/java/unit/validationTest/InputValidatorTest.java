@@ -3,6 +3,7 @@ package unit.validationTest;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -13,33 +14,43 @@ import validation.InputValidator;
 public class InputValidatorTest {
     
     //Test called through the shared resource
+    @Tag("Smoke")
+    @DisplayName("Covers: VR-08, FR-M2")
     void test_valid_expense_id(String input, boolean expected){
         assertEquals(InputValidator.isValidExpenseId(input), expected);
     }
 
     @Test 
     @Tag("Negative")
+    @DisplayName("Covers: VR-08, FR-M2")
     void test_valid_expense_id_null(){
         assertFalse(InputValidator.isValidExpenseId(null));
     }
 
     //Test called through the shared resource
+    @Tag("Smoke")
+    @DisplayName("Covers: VR-09")
     void test_valid_menu_choice(String input, boolean expected){
         assertEquals(InputValidator.isValidMenuChoice(input, 3), expected);
     }
 
     @Test 
     @Tag("Negative")
+    @DisplayName("Covers: VR-09")
     void test_valid_menu_choice_null(){
         assertFalse(InputValidator.isValidMenuChoice(null, 3));
     }
 
     //Test called through the shared resource
+    @Tag("Smoke")
+    @DisplayName("Covers: FR-A1")
     void test_not_empty(String input, boolean expected){
         assertEquals(InputValidator.isNonEmpty(input), expected);
     }
 
     @ParameterizedTest 
+    @Tag("Boundary")
+    @DisplayName("Covers: VR-08, FR-M2, FR-A1")
     @CsvFileSource(resources="/validation_cases.csv", numLinesToSkip = 1)
     void test_shared_data(String field, String input, boolean expected){
         if(field.equals("expense_id")){

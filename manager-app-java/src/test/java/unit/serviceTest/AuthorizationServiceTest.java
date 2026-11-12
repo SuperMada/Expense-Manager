@@ -6,6 +6,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
@@ -27,6 +28,7 @@ public class AuthorizationServiceTest {
 
     @Test 
     @Tag("Smoke")
+    @DisplayName("Covers: FR-A1")
     void test_login_works_with_valid_inputs(){
         when(userDao.findByLogin("mgr_john", "FakepasswordButWorks")).thenReturn(new User(1, "mgr_john", "manager", "John Malkovich"));
         
@@ -35,6 +37,7 @@ public class AuthorizationServiceTest {
 
     @Test 
     @Tag("Negative")
+    @DisplayName("Covers: FR-A1")
     void test_login_throws_on_no_user_found(){
         when(userDao.findByLogin("mgr_john", "Bad")).thenReturn(null);
 
@@ -43,6 +46,7 @@ public class AuthorizationServiceTest {
 
     @Test 
     @Tag("Negative")
+    @DisplayName("Covers: FR-A1")
     void test_login_throws_on_employee(){
         when(userDao.findByLogin("emp_bob", "FakepasswordButWorks")).thenReturn(new User(3, "emp_bob", "employee", "Bob Odenkirk"));
 

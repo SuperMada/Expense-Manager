@@ -20,6 +20,8 @@ public class ExpenseDao {
         this.conn = conn;
     }
 
+    //SQL to get pending expenses
+    //Name is kinda whack, its from when i though we needed to sort by date and amount
     public List<PendingExpense> getExpenseSortDate(){
         String sql = """
                     SELECT ex.id, u.full_name, ex.expense_date, c.name, ex.amount, ex.description

@@ -12,6 +12,7 @@ import java.time.LocalDate;
 import java.time.ZoneOffset;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -46,7 +47,7 @@ public class ApprovalServiceTest {
 
     @Test 
     @Tag("Smoke")
-    @Tag("Partitioning")
+    @DisplayName("Covers: FR-M2")
     void test_approve_works(){
         when(approvalDao.findStatus(1)).thenReturn("pending");
 
@@ -57,7 +58,7 @@ public class ApprovalServiceTest {
 
     @Test 
     @Tag("Smoke")
-    @Tag("Partitioning")
+    @DisplayName("Covers: FR-M2")
     void test_deny_works(){
         when(approvalDao.findStatus(1)).thenReturn("pending");
 
@@ -68,7 +69,7 @@ public class ApprovalServiceTest {
 
     @Test 
     @Tag("Negative")
-    @Tag("Partitioning")
+    @DisplayName("Covers: FR-M2")
     void test_approval_checks_valid_comment(){
         when(approvalDao.findStatus(1)).thenReturn("pending");
 
@@ -77,7 +78,7 @@ public class ApprovalServiceTest {
  
     @ParameterizedTest 
     @Tag("Negative")
-    @Tag("Partitioning")
+    @DisplayName("Covers: FR-M2, VR-05")
     @CsvSource({"201", "4"})
     void test_denial_checks_valid_comment(int length){
         when(approvalDao.findStatus(1)).thenReturn("pending");
@@ -87,21 +88,21 @@ public class ApprovalServiceTest {
 
     @Test 
     @Tag("Negative")
-    @Tag("Partitioning")
+    @DisplayName("Covers: FR-M2, FR-A4")
     void test_approval_fails_on_employee_attempt(){
         assertThrows(AuthorizationException.class, () -> service.approve(employee, 1, "Comment"));
     }
 
     @Test 
     @Tag("Negative")
-    @Tag("Partitioning")
+    @DisplayName("Covers: FR-M2, FR-A4")
     void test_deny_fails_on_employee_attempt(){
         assertThrows(AuthorizationException.class, () -> service.deny(employee, 1, "Comment"));
     }
 
     @Test 
     @Tag("Negative")
-    @Tag("Partitioning")
+    @DisplayName("Covers: FR-M2, FR-A4")
     void test_pending_check_throws_on_approved(){
         when(approvalDao.findStatus(1)).thenReturn("approved");
 
@@ -111,7 +112,7 @@ public class ApprovalServiceTest {
 
     @Test 
     @Tag("Negative")
-    @Tag("Partitioning")
+    @DisplayName("Covers: FR-M2, FR-A4")
     void test_pending_check_throws_on_denied(){
         when(approvalDao.findStatus(1)).thenReturn("denied");
 
@@ -121,7 +122,7 @@ public class ApprovalServiceTest {
 
     @Test 
     @Tag("Negative")
-    @Tag("Partitioning")
+    @DisplayName("Covers: FR-M2, FR-A4")
     void test_pending_check_throws_on_null_status(){
         when(approvalDao.findStatus(1)).thenReturn(null);
 

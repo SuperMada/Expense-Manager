@@ -29,6 +29,7 @@ public class Main {
         try (Scanner in = new Scanner(System.in);
             Connection conn = db.Database.init()) {
 
+            //Setup everything for menu
             UserDao userDao = new UserDao(conn);
             ExpenseDao expenseDao = new ExpenseDao(conn);
             ApprovalDao approvalDao = new ApprovalDao(conn);
@@ -40,16 +41,17 @@ public class Main {
 
             return new Menu(auth, approvals, reports, in).run();
 
-        } catch (ExpenseManagerException e) {          // expected errors: short message
+        //Catches expected errors
+        } catch (ExpenseManagerException e) {
             System.out.println(e.getMessage());
             return 1;
-        } catch (SQLException | IOException e) {       // DB couldn't open / init
+        } catch (SQLException | IOException e) {
             System.out.println("Could not open the database.");
-            // log e here
+            log.severe(e.getMessage());
             return 1;
-        } catch (Exception e) {                        // anything else (FR-S4)
+        } catch (Exception e) {
             System.out.println("Unexpected error. See log.");
-            // log e here
+            log.severe(e.getMessage());
             return 1;
         }
     }

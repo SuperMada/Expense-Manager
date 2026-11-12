@@ -18,6 +18,7 @@ public class AuthorizationService{
         }
     }
 
+    //Get user details from SQL and either allow them access or throw correct error
     public User login(String username, String password){
         User user = userDao.findByLogin(username, password);
         if(user == null) throw new AuthenticationException("Invalid username or password");

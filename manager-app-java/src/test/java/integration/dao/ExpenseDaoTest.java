@@ -10,6 +10,7 @@ import java.util.List;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
@@ -36,6 +37,7 @@ public class ExpenseDaoTest {
 
     @Test
     @Tag("Integration")
+    @DisplayName("Covers: FR-M1")
     void test_pending_expenses(){
         List<PendingExpense> output = expenseDao.getExpenseSortDate();
         assertEquals(output.size(), 10);
