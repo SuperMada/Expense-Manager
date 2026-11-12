@@ -7,6 +7,7 @@ import java.util.List;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import dao.ReportDao;
@@ -31,6 +32,7 @@ public class ReportDaoTest {
     }
 
     @Test 
+    @Tag("Integration")
     void test_get_report_employee(){
         List<ReportRow> output = reportDao.getReportEmployee();
         assertEquals(output.size(), 4);
@@ -41,6 +43,7 @@ public class ReportDaoTest {
     }
 
     @Test 
+    @Tag("Integration")
     void test_get_report_category(){
         List<ReportRow> output = reportDao.getReportCategory();
         assertEquals(output.size(), 6);

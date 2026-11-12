@@ -58,7 +58,7 @@ public class Menu {
             try {
                 return auth.login(username, password);
             } catch (AuthenticationException e) {
-                System.out.println(e.getMessage() + "\n");   // counts as a failed attempt
+                System.out.println(e.getMessage() + "\n");
             }
         }
         return null;
@@ -84,7 +84,7 @@ public class Menu {
                     case "3" -> reportsMenu(user);
                     default  -> System.out.println("Please enter a valid option.\n");
                 }
-            } catch (ExpenseManagerException e) {  // expected errors: short message, no stack trace
+            } catch (ExpenseManagerException e) {
                 System.out.println(e.getMessage() + "\n");
             }
         }
@@ -116,11 +116,10 @@ public class Menu {
         }
         int id = Integer.parseInt(idText);
 
-        approvals.requirePending(user, id);   // throws NotFound / InvalidState -> printed by mainLoop
+        approvals.requirePending(user, id);
 
         boolean approve = charInput("Please Select Approve('a') or Deny('d')", "a", "d").equals("a");
-        boolean wantsComment = !approve
-                || charInput("Would you like to add a comment? (y/n)", "y", "n").equals("y");
+        boolean wantsComment = !approve || charInput("Would you like to add a comment? (y/n)", "y", "n").equals("y");
 
         while (true) {
             String comment = wantsComment ? prompt("Please enter your comment: ") : null;
@@ -129,7 +128,7 @@ public class Menu {
                 else         approvals.deny(user, id, comment);
                 System.out.println("Successfully updated the expense report\n");
                 return;
-            } catch (ValidationException e) {   // VR-05 / VR-06: re-ask for the comment only
+            } catch (ValidationException e) {
                 System.out.println(e.getMessage() + "\n");
             }
         }
@@ -171,6 +170,10 @@ public class Menu {
 
     private String promptPassword(String question){
         Console console = System.console();
+        //For tests the console is always null and I can't take in password
+        if (console == null) {
+            return prompt(question);
+        }
         char[] password = console.readPassword(question);
         System.out.println();
         return new String(password);

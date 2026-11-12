@@ -45,6 +45,7 @@ public class ApprovalDaoTest {
 
     @ParameterizedTest 
     @Tag("Smoke")
+    @Tag("Integration")
     @CsvSource({"1,pending", "2,approved", "3,denied"})
     void test_find_status_gets_status(int id, String expected){
         assertEquals(approvalDao.findStatus(id), expected);
@@ -52,11 +53,13 @@ public class ApprovalDaoTest {
 
     @Test 
     @Tag("Negative")
+    @Tag("Integration")
     void test_find_status_no_status(){
         assertNull(approvalDao.findStatus(100));
     }
 
     @Test 
+    @Tag("Integration")
     void test_save_decision_write() throws SQLException{
         int id = expenseDao.getExpenseSortDate().get(0).id();
         String sql = """

@@ -32,12 +32,4 @@ public class UserDaoTest {
         
         assertThrows(DatabaseException.class, () -> userDao.findByLogin("Username", "Password"));
     }
-
-    @Test 
-    @Tag("Negative")
-    void test_find_by_id_on_db_error() throws SQLException{
-        when(conn.prepareStatement(anyString())).thenThrow(new SQLException("Oops"));
-        
-        assertThrows(DatabaseException.class, () -> userDao.findById(1));
-    }
 }

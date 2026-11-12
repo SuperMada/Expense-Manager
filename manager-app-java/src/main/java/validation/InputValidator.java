@@ -1,8 +1,5 @@
 package validation;
 
-import java.time.LocalDate;
-import java.time.format.DateTimeParseException;
-
 public final class InputValidator {
     private InputValidator() {}
 
@@ -10,7 +7,7 @@ public final class InputValidator {
     public static boolean isValidExpenseId(String input) {
         if (input == null) return false;
         String s = input.strip();
-        if (!s.matches("\\d+")) return false;          // rejects -1, 1.5, abc, empty
+        if (!s.matches("\\d+")) return false;
         return Integer.parseInt(s) > 0;
     }
 

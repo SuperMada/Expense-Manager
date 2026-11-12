@@ -38,25 +38,6 @@ public class UserDao {
         }
     }
 
-    public User findById(int id){
-        String sql = "SELECT id, username, role, full_name FROM users WHERE id = ?;";
-        try(PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setInt(1, id);
-            try(ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    log.info("Found user by id: " + id);
-                    return map(rs);
-                } else {
-                    log.warning("Could not find user by id: " + id);
-                    return null;
-                }
-            }
-        } catch(SQLException e){
-                log.severe("Database error attempting to find user with id: " + id);
-                throw new DatabaseException("DB Error attempting to get user with id");
-            }
-    }
-
     private User map(ResultSet rs) throws SQLException {
         return new User(rs.getInt("id"), rs.getString("username"),
                         rs.getString("role"), rs.getString("full_name"));
