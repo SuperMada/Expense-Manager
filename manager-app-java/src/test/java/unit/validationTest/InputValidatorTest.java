@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvFileSource;
 import org.junit.jupiter.params.provider.CsvSource;
 
 import validation.InputValidator;
@@ -38,9 +39,9 @@ public class InputValidatorTest {
     }
 
     @ParameterizedTest 
-    @CsvSource({",false", "   ,false", "TheresStuffHere,true"})
+    @CsvFileSource(resources="/validation_cases.csv", numLinesToSkip = 16)
     @Tag("Boundary")
-    void test_not_empty(String input, boolean expected){
+    void test_not_empty(String field, String input, boolean expected){
         assertEquals(InputValidator.isNonEmpty(input), expected);
     }
 }
