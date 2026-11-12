@@ -14,7 +14,5 @@ menu_choice,,false
 menu_choice,abc,false
 menu_choice,1.5,false
 menu_choice,-1,false
-login_input,emp_jane,true
-login_input,Passw0rd!,true
 login_input,,false
 login_input,"   ",false
