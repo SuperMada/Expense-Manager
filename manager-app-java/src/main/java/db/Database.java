@@ -1,3 +1,4 @@
+package db;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -6,6 +7,8 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
+
+import exceptions.NotFoundException;
 
 public class Database {
 
@@ -24,9 +27,12 @@ public class Database {
                 }
             }
         }
+        if(value == null){
+            throw new NotFoundException(".env not found, please make sure .env exists and is the main dir");
+        }
 
-        if (value == null || value.isBlank()) {
-            throw new IOException(ENV_VAR + " is not set in " + ENV_FILE.toAbsolutePath());
+        if (value.isBlank()) {
+            throw new NotFoundException(ENV_VAR + " is not set in .env");
         }
 
         Path dbPath = Path.of(value);
