@@ -88,7 +88,7 @@ def login_menu(expected_role: str):
 
         log.info("Login successful for user: %s", user['username'])
         print()
-        print(f"Welcome, {user['full_name']}!")
+        print(f"Welcome, {user['full_name']}.")
         return user
 
 def submit_expense_menu(user: sql.Row):
