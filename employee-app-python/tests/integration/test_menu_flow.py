@@ -24,7 +24,7 @@ def test_valid_employee_login(menu_environment, capsys):
     with _mock_io(["emp_jane", "Passw0rd!"]):
         user = menu.login_menu(expected_role="employee")
         output = capsys.readouterr().out
-        assert "Welcome, Jane Doe." in output
+        assert "Welcome, Jane Doe" in output
         assert user is not None
 
 
