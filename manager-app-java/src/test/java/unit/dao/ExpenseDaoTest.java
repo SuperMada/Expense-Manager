@@ -9,6 +9,7 @@ import java.sql.Connection;
 import java.sql.SQLException;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
@@ -27,6 +28,7 @@ public class ExpenseDaoTest {
 
     @Test 
     @Tag("Negative")
+    @DisplayName("Covers: FR-M1")
     void test_get_expense_on_db_error() throws SQLException{
         when(conn.prepareStatement(anyString())).thenThrow(new SQLException("This is an error"));
 

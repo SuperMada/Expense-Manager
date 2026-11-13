@@ -18,6 +18,7 @@ public class UserDao {
         this.conn = conn;
     }
 
+    //SQL to login in
     public User findByLogin(String username, String password){
         String sql = "SELECT id, username, role, full_name FROM users WHERE username = ? and password = ?;";
         try(PreparedStatement ps = conn.prepareStatement(sql)) {

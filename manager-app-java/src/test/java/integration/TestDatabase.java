@@ -12,9 +12,7 @@ import java.util.stream.Stream;
 
 import org.sqlite.SQLiteConfig;
 
-/** Builds a throwaway SQLite database from sql/schema.sql + sql/seed.sql. */
 public final class TestDatabase implements AutoCloseable {
-    // Surefire runs with the module folder (manager-app-java/) as the working directory.
     private static final Path SQL_DIR = Path.of("..", "sql");
 
     private final Path dir;
@@ -25,13 +23,13 @@ public final class TestDatabase implements AutoCloseable {
         this.conn = conn;
     }
 
-    /** Creates the temp folder, the DB file, runs schema + seed, and opens a connection. */
+    //Creates the temp db
     public static TestDatabase create() throws IOException, SQLException {
         Path dir = Files.createTempDirectory("em-test-");
         Connection conn = null;
         try {
             SQLiteConfig config = new SQLiteConfig();
-            config.enforceForeignKeys(true);   // same settings as the real app (8.1)
+            config.enforceForeignKeys(true);
             config.setBusyTimeout(5000);
             conn = DriverManager.getConnection(
                 "jdbc:sqlite:" + dir.resolve("test.db"), config.toProperties());
@@ -40,7 +38,7 @@ public final class TestDatabase implements AutoCloseable {
             runScript(conn, SQL_DIR.resolve("seed.sql"));
             return new TestDatabase(dir, conn);
         } catch (IOException | SQLException | RuntimeException e) {
-            if (conn != null) conn.close();      // don't leak the file handle
+            if (conn != null) conn.close();
             deleteRecursively(dir);
             throw e;
         }
@@ -48,15 +46,14 @@ public final class TestDatabase implements AutoCloseable {
 
     public Connection connection() { return conn; }
 
-    /** Closes the connection first (Windows can't delete an open file), then deletes the folder. */
+    //Deletes the db after every execution so db is new for every integration test
     @Override
     public void close() throws IOException, SQLException {
         conn.close();
         deleteRecursively(dir);
     }
 
-    // ---------- internals ----------
-
+    //Runs schema/seed
     private static void runScript(Connection conn, Path file) throws IOException, SQLException {
         StringBuilder cleaned = new StringBuilder();
         for (String line : Files.readAllLines(file)) {
@@ -69,6 +66,7 @@ public final class TestDatabase implements AutoCloseable {
         }
     }
 
+    //Deletes db
     private static void deleteRecursively(Path dir) throws IOException {
         try (Stream<Path> paths = Files.walk(dir)) {
             paths.sorted(Comparator.reverseOrder()).forEach(p -> p.toFile().delete());

@@ -11,10 +11,10 @@ import java.util.List;
 import java.util.Scanner;
 
 import exceptions.AuthenticationException;
-import exceptions.ValidationException;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
@@ -48,6 +48,7 @@ public class MenuFlowTest {
 
     @Test 
     @Tag("Smoke")
+    @DisplayName("Covers: FR-A1")
     void test_login_screen_works(){
         when(auth.login(anyString(), anyString())).thenReturn(new User(1, "mgr_john", "manager", "John Smith"));
 
@@ -60,6 +61,7 @@ public class MenuFlowTest {
 
     @Test 
     @Tag("Negative")
+    @DisplayName("Covers: FR-A1, FR-A3")
     void test_login_fails_on_3_attempts(){
         when(auth.login(anyString(), anyString())).thenThrow(new AuthenticationException("Invalid username or password"));
 
@@ -70,6 +72,8 @@ public class MenuFlowTest {
     }
 
     @Test 
+    @Tag("Regression")
+    @DisplayName("Covers: FR-A1")
     void test_login_on_empty_input(){
         when(auth.login(anyString(), anyString())).thenReturn(new User(1, "mgr_john", "manager", "John Smith"));
 
@@ -80,6 +84,8 @@ public class MenuFlowTest {
     }
 
     @Test 
+    @Tag("Smoke")
+    @DisplayName("Covers: FR-M1, VR-09")
     void test_menu_option_1_not_empty(){
         when(auth.login(anyString(), anyString())).thenReturn(new User(1, "mgr_adam", "manager", "Adam Fischer"));
         when(approvals.listPendingByDate(any())).thenReturn(List.of(new PendingExpense(1, "Adam Fischer", "2026-08-28", "Lodging", 100.00, "That date is my birthday")));
@@ -97,6 +103,8 @@ public class MenuFlowTest {
     }
 
     @Test 
+    @Tag("Regression")
+    @DisplayName("Covers: FR-M1, VR-09")
     void test_menu_option_1_empty(){
         when(auth.login(anyString(), anyString())).thenReturn(new User(1, "mgr_adam", "manager", "Adam Fischer"));
         when(approvals.listPendingByDate(any())).thenReturn(List.of());
@@ -113,6 +121,8 @@ public class MenuFlowTest {
     //approval, deny, bad id input, yes comment, no comment
 
     @Test 
+    @Tag("Smoke")
+    @DisplayName("Covers: FR-M2, VR-09, VR-08, VR-06")
     void test_menu_option_2_approve_with_comment(){
         when(auth.login(anyString(), anyString())).thenReturn(new User(1, "mgr_adam", "manager", "Adam Fischer"));
         Menu menu = new Menu(auth, approvals, reports, new Scanner("mgr_adam\nPassw0rd!\n2\n1\na\ny\nComment\n0"));
@@ -123,6 +133,8 @@ public class MenuFlowTest {
     }
 
     @Test 
+    @Tag("Regression")
+    @DisplayName("Covers: FR-M2, VR-09, VR-08")
     void test_menu_option_2_approve_without_comment(){
         when(auth.login(anyString(), anyString())).thenReturn(new User(1, "mgr_adam", "manager", "Adam Fischer"));
         Menu menu = new Menu(auth, approvals, reports, new Scanner("mgr_adam\nPassw0rd!\n2\n1\na\nn\n0"));
@@ -133,6 +145,8 @@ public class MenuFlowTest {
     }
 
     @Test 
+    @Tag("Smoke")
+    @DisplayName("Covers: FR-M2, VR-09, VR-08, VR-05")
     void test_menu_option_2_deny(){
         when(auth.login(anyString(), anyString())).thenReturn(new User(1, "mgr_adam", "manager", "Adam Fischer"));
         Menu menu = new Menu(auth, approvals, reports, new Scanner("mgr_adam\nPassw0rd!\n2\n1\nd\nComment\n0"));
@@ -143,6 +157,8 @@ public class MenuFlowTest {
     }
 
     @Test 
+    @Tag("Negative")
+    @DisplayName("Covers: FR-M1, FR-A4")
     void test_menu_option_2_bad_input_id(){
         when(auth.login(anyString(), anyString())).thenReturn(new User(1, "mgr_adam", "manager", "Adam Fischer"));
         Menu menu = new Menu(auth, approvals, reports, new Scanner("mgr_adam\nPassw0rd!\n2\n-1\n0"));
@@ -153,6 +169,8 @@ public class MenuFlowTest {
     }
 
     @Test 
+    @Tag("Smoke")
+    @DisplayName("Covers: FR-M3")
     void test_menu_option_3_employee(){
         when(auth.login(anyString(), anyString())).thenReturn(new User(1, "mgr_adam", "manager", "Adam Fischer"));
         when(reports.byEmployee(any())).thenReturn(List.of(new ReportRow("MD Tanjeem", 3, 1000.00, 2)));
@@ -168,6 +186,8 @@ public class MenuFlowTest {
     }
 
     @Test 
+    @Tag("Smoke")
+    @DisplayName("Covers: FR-M3")
     void test_menu_option_3_category(){
         when(auth.login(anyString(), anyString())).thenReturn(new User(1, "mgr_adam", "manager", "Adam Fischer"));
         when(reports.byCategory(any())).thenReturn(List.of(new ReportRow("Excursions", 3, 1000.00, 2)));
@@ -183,6 +203,8 @@ public class MenuFlowTest {
     }
 
     @Test 
+    @Tag("Regression")
+    @DisplayName("Covers: FR-M3")
     void test_menu_option_3_empty(){
         when(auth.login(anyString(), anyString())).thenReturn(new User(1, "mgr_adam", "manager", "Adam Fischer"));
         when(reports.byCategory(any())).thenReturn(List.of());

@@ -18,7 +18,7 @@ public class ApprovalDao {
         this.conn = conn;
     }
 
-    /** Returns "pending", "approved", "denied", or null if no such expense. */
+    // Returns "pending", "approved", "denied", or null if no such expense.
     public String findStatus(int expenseId) {
         String sql = "SELECT status FROM approvals WHERE expense_id = ?";
         try(PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -39,7 +39,7 @@ public class ApprovalDao {
         }
     }
 
-    /** comment may be null for an approval with no comment. */
+    //SQL to write to db
     public void saveDecision(int expenseId, String status, int reviewerId,
                              String comment, LocalDate reviewDate) {
         String sql = """
@@ -51,7 +51,7 @@ public class ApprovalDao {
             ps.setString(1, status);
             ps.setInt(2, reviewerId);
             ps.setString(3, comment);
-            ps.setString(4, reviewDate.toString());   // YYYY-MM-DD
+            ps.setString(4, reviewDate.toString());
             ps.setInt(5, expenseId);
             ps.executeUpdate();
         } catch(SQLException e) {

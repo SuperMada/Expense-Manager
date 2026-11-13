@@ -7,6 +7,7 @@ import java.sql.Connection;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -35,6 +36,7 @@ public class UserDaoTest {
 
     @Test 
     @Tag("Integration")
+    @DisplayName("Covers: FR-A1, FR-A2")
     void test_find_by_login_works(){
         User user = userDao.findByLogin("mgr_john", "Passw0rd!");
         
@@ -46,6 +48,7 @@ public class UserDaoTest {
     @ParameterizedTest 
     @Tag("Negative")
     @Tag("Integration")
+    @DisplayName("Covers: FR-A1, FR-A3")
     @CsvSource({"badusername,badpassword", "mgr_john,badpassword", "badusername,Passw0rd!", ",", ",Passw0rd!", "mgr_john,"})
     void test_find_by_login_fails_to_find(String username, String password){
         assertNull(userDao.findByLogin(username, password));

@@ -3,7 +3,7 @@ package validation;
 public final class InputValidator {
     private InputValidator() {}
 
-    /** VR-08: positive whole number that fits in an int. */
+    //Checks valid expense ID
     public static boolean isValidExpenseId(String input) {
         if (input == null) return false;
         String s = input.strip();
@@ -11,13 +11,13 @@ public final class InputValidator {
         return Integer.parseInt(s) > 0;
     }
 
-    /** VR-09: a whole number from 0 to maxOption. */
+    //Checks valid menu choice
     public static boolean isValidMenuChoice(String input, int maxOption) {
         if (input == null || !input.strip().matches("\\d+")) return false;
         return Integer.parseInt(input.strip()) <= maxOption;
     }
 
-    /** FR-A1: login fields must not be empty or spaces only. */
+    //Check string not empty
     public static boolean isNonEmpty(String input) {
         return input != null && !input.strip().isEmpty();
     }

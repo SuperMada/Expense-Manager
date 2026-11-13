@@ -11,7 +11,6 @@ import exceptions.NotFoundException;
 import exceptions.ValidationException;
 import model.PendingExpense;
 import model.User;
-import service.AuthorizationService;
 import validation.CommentValidator;
 
 public class ApprovalService {
@@ -30,13 +29,13 @@ public class ApprovalService {
         return expenseDao.getExpenseSortDate();
     }
 
-    /** Used by the menu before it asks for a comment. Throws if the expense can't be decided. */
+    //Check that the status is pending
     public void requirePending(User actor, int expenseId) {
         AuthorizationService.authorized(actor.role(), "manager");
         checkPending(expenseId);
     }
 
-    /** FR-M2, VR-06: comment is optional; a blank comment is stored as null. */
+    //Send input to Dao after checking if input is ok
     public void approve(User actor, int expenseId, String comment) {
         AuthorizationService.authorized(actor.role(), "manager");
         if (!CommentValidator.isValidApproval(comment))
@@ -46,7 +45,7 @@ public class ApprovalService {
         approvalDao.saveDecision(expenseId, "approved", actor.id(), cleaned, today());
     }
 
-    /** FR-M2, VR-05: comment is required, 5-200 characters. */
+    //Send input to Dao after checking if input is ok
     public void deny(User actor, int expenseId, String comment) {
         AuthorizationService.authorized(actor.role(), "manager");
         if (!CommentValidator.isValidDenial(comment))

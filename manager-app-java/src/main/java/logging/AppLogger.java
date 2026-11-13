@@ -16,16 +16,18 @@ public final class AppLogger {
 
     private AppLogger() {}
 
-    /** Call once from Main, before anything else. */
+    //Init in main
     public static synchronized void init(Path logFile) throws IOException {
         if (configured) return;
         Files.createDirectories(logFile.toAbsolutePath().getParent());
 
         Logger root = Logger.getLogger(NAME);
-        root.setUseParentHandlers(false);      // keep log lines off the console (menus own System.out)
+        //DOnt print log to main
+        root.setUseParentHandlers(false);
+        //Output level
         root.setLevel(Level.INFO);
 
-        FileHandler fh = new FileHandler(logFile.toString(), true);   // true = append
+        FileHandler fh = new FileHandler(logFile.toString(), true);
         fh.setEncoding("UTF-8");
         fh.setFormatter(new Formatter() {
             @Override public String format(LogRecord r) {
@@ -43,7 +45,7 @@ public final class AppLogger {
         configured = true;
     }
 
-    /** Each class asks for its own logger: AppLogger.get(UserDao.class). */
+    //Logger knows what class its in and can output it to log
     public static Logger get(Class<?> c) {
         return Logger.getLogger(NAME + "." + c.getSimpleName());
     }

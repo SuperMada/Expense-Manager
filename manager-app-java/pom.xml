@@ -42,6 +42,11 @@
                 <directory>../sql</directory>
             </resource>
         </resources>
+        <testResources>  
+            <testResource>
+                <directory>../shared-test-data</directory>
+            </testResource>
+        </testResources>
         <plugins>
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>

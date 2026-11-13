@@ -20,6 +20,7 @@ public class ReportDao {
         this.conn = conn;
     }
 
+    //SQL to get report
     public List<ReportRow> getReportEmployee(){
         String sql = """
             SELECT u.full_name as name, COUNT(*) as totalReports, SUM(ex.amount) as totalAmount, SUM(CASE WHEN a.status = 'approved' THEN 1 ELSE 0 END) as totalApproved
