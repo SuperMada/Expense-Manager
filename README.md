@@ -84,3 +84,8 @@ For pytest:
 pytest                      # For running all tests
 pytest -c pytest-report.ini # For pytest + HTML reports
 ```
+
+### Java Manager App Tests
+```bash
+mvn test site
+```
