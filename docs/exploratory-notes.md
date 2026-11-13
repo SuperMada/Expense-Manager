@@ -160,3 +160,34 @@
   - Severity: Med
 - BUG-004: Password input should be hidden
   - Severity: Low
+
+
+## Session 2 - Java Manager App 
+
+### What Team 2 Tests on ours
+
+**Charter: Explore the expense review flow (approvals, denials, and comment validation) with boundary lengths, whitespace padding, and invalid expense IDs to find 
+  │ comment validation bypasses and state transition defects.**
+**Tester: Fahad Hussain** 
+**Date: 2026-11-09** 
+**Duration:** 30 min
+**Environment: Java Manager app on Windows 10, DB seeded from sql/schema.sql + sql/seed.sql**
+
+### What Team 2 tried on our app
+| Probe                         | Input                                   | Observed | Assessment       |
+| ------------------------------| --------------------------------------- | -------- | ---------------- |
+| Denial comment < 5 chars      | "fail" (4 chars)                        | Rejected | OK               |                 
+| Denial comment exactly 5 chars| "notes" (5 chars)                       | Accepted | OK               |
+| Denial option whitespace only | "  " (2 spaces)                         | Rejected | OK               |                                                    
+| Denial comment whitespace only| "     " (5 spaces)                      | Accepted | Fail             |                 
+| Denial comment > 200 chars    | Generated text 201 chars in length      | Rejected | OK               |                  
+| Review already approved ID    | 24                                      | Rejected | OK               |
+| Non-existent int expense ID   | 999                                     | Rejected | OK               | 
+| Non-existent text expense ID  | abc                                     | Rejected | OK               | 
+
+### What Team 2 found on our app
+
+**Bugs:**
+
+- BUG-001: Denial comment accepts a whitespace-only string if it meets the minimum character length of 5.
+  - Severity: Low

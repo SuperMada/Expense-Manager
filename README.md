@@ -11,7 +11,7 @@ This is a **Quality Engineering and Automation** project. You will build both ap
 ## Prerequisites
 
 - Python 3.15+
-- Java 17+
+- Java 17
 - Maven 3.10+
 - SQLite CLI (`sqlite3`)
 
