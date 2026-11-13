@@ -1,5 +1,3 @@
--- change all names with following: John Smith, Gabe Newell, Jane Doe, Peter Parker, George Brown, Bob Lee
-
 PRAGMA foreign_keys = ON;
 
 BEGIN;
